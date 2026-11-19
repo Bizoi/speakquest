@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>קוסמו באי האנגלית — SpeakQuest (כיתה ד׳)</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Header & Grade Switcher -->
+  <header class="top-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-logo" aria-hidden="true">🚀🐶</span>
+        <div>
+          <h1>קוסמו באי האנגלית — SpeakQuest</h1>
+          <div class="brand-sub">הרפתקת דיבור באנגלית לתלמידי ישראל</div>
+        </div>
+      </div>
+
+      <nav class="grade-bar" aria-label="בחירת שכבת גיל">
+        <button class="grade-pill unlocked" data-grade="2">כיתה ב׳ 🌟 (פתוח!)</button>
+        <button class="grade-pill" data-locked="true">כיתה ג׳ 🔒</button>
+        <button class="grade-pill unlocked active" data-grade="4" aria-current="page">כיתה ד׳ ⭐ (פתוח!)</button>
+        <button class="grade-pill" data-locked="true">כיתה ה׳ 🔒</button>
+        <button class="grade-pill" data-locked="true">כיתה ו׳ 🔒</button>
+      </nav>
+
+      <div class="stats-bar">
+        <span class="stat-chip" title="מטבעות">🪙 <span id="stat-coins">25</span></span>
+        <span class="stat-chip" title="כוכבי דיבור">⭐ <span id="stat-stars">0</span></span>
+        <span class="stat-chip" title="מילים שנלמדו">🏅 <span id="stat-mastered">0/8</span></span>
+        <span class="stat-chip" title="סודות סקרנות שהתגלו">🔮 סודות שהתגלו: <span id="stat-secrets">0/8</span></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="app-shell">
+    <!-- Persistent Cosmo Buddy Sidebar -->
+    <aside class="card cosmo-card" aria-label="הפינה של קוסמו">
+      <h2>החבר שלכם: קוסמו 🐾</h2>
+      <div class="cosmo-stage">
+        <svg viewBox="0 0 160 160" width="145" height="145" role="img" aria-label="קוסמו כלב החלל">
+          <!-- Cape accessory -->
+          <path id="acc-cape" class="hidden" d="M35 95 L15 148 L145 148 L125 95 Z" fill="#ef4444" stroke="#991b1b" stroke-width="3"/>
+          <!-- Helmet Halo -->
+          <circle cx="80" cy="82" r="58" fill="#e0e7ff" fill-opacity="0.35" stroke="#a5b4fc" stroke-width="3"/>
+          <!-- Ears -->
+          <ellipse cx="38" cy="68" rx="16" ry="26" transform="rotate(-18 38 68)" fill="#d97706"/>
+          <ellipse cx="122" cy="68" rx="16" ry="26" transform="rotate(18 122 68)" fill="#d97706"/>
+          <!-- Head -->
+          <circle cx="80" cy="82" r="42" fill="#fbbf24" stroke="#92400e" stroke-width="3"/>
+          <!-- Snout -->
+          <ellipse cx="80" cy="94" rx="20" ry="15" fill="#fef3c7"/>
+          <!-- Eyes -->
+          <circle cx="64" cy="74" r="6" fill="#1e1b4b"/>
+          <circle cx="96" cy="74" r="6" fill="#1e1b4b"/>
+          <circle cx="62" cy="72" r="2" fill="#ffffff"/>
+          <circle cx="94" cy="72" r="2" fill="#ffffff"/>
+          <!-- Nose & Smile -->
+          <ellipse cx="80" cy="89" rx="7" ry="5" fill="#1e1b4b"/>
+          <path d="M70 98 Q80 108 90 98" fill="none" stroke="#1e1b4b" stroke-width="3" stroke-linecap="round"/>
+          <!-- Tongue -->
+          <path d="M76 102 Q80 112 84 102" fill="#fb7185"/>
+          <!-- Sunglasses accessory -->
+          <g id="acc-shades" class="hidden">
+            <rect x="48" y="65" width="28" height="16" rx="4" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+            <rect x="84" y="65" width="28" height="16" rx="4" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+            <line x1="76" y1="72" x2="84" y2="72" stroke="#38bdf8" stroke-width="3"/>
+          </g>
+          <!-- Crown accessory -->
+          <polygon id="acc-crown" class="hidden" points="52,44 62,22 80,36 98,22 108,44" fill="#facc15" stroke="#ca8a04" stroke-width="2.5"/>
+          <!-- Wizard Hat accessory -->
+          <g id="acc-wizard" class="hidden">
+            <ellipse cx="80" cy="42" rx="38" ry="8" fill="#4c1d95"/>
+            <polygon points="52,42 80,4 108,42" fill="#6d28d9" stroke="#fde047" stroke-width="2"/>
+          </g>
+        </svg>
+      </div>
+
+      <div id="cosmo-bubble" class="cosmo-bubble">
+        היי חברים! בואו נדבר אנגלית בקול רם ונאסוף כוכבים! 🌟
+      </div>
+
+      <div style="font-size:0.84rem;font-weight:700;color:#4c1d95">מד השמחה של קוסמו</div>
+      <div class="mood-meter"><div id="mood-fill" class="mood-fill" style="width:75%"></div></div>
+
+      <div style="display:flex;gap:0.45rem;justify-content:center;flex-wrap:wrap">
+        <button id="feed-veg-btn" class="btn btn-green" style="font-size:0.85rem;padding:0.5rem 0.75rem">
+          🥦 האכילו ירקות (5 🪙)
+        </button>
+        <button id="open-shop-btn" class="btn btn-amber" style="font-size:0.85rem;padding:0.5rem 0.75rem">
+          🎩 חנות אביזרים
+        </button>
+      </div>
+
+      <h3 style="margin-top:1rem;font-size:0.95rem;text-align:right">🎯 משימות יומיות</h3>
+      <ul class="daily-list">
+        <li id="daily-echo" class="daily-item"></li>
+        <li id="daily-sentence" class="daily-item"></li>
+        <li id="daily-feed" class="daily-item"></li>
+      </ul>
+    </aside>
+
+    <!-- Main Interactive Stage -->
+    <section class="card">
+      <nav class="mode-nav" aria-label="שלבי המשחק">
+        <button class="btn btn-soft nav-tab active" data-screen="hub">🏝️ מפת האי</button>
+        <button class="btn btn-soft nav-tab" data-screen="echo">🎤 1. קסם המילים</button>
+        <button class="btn btn-soft nav-tab" data-screen="builder">🧩 2. בונים משפט</button>
+        <button class="btn btn-soft nav-tab" data-screen="boss">👑 3. שיחה עם קוסמו</button>
+      </nav>
+
+      <!-- SCREEN 0: Island Map Hub -->
+      <div id="screen-hub" class="screen-pane">
+        <h2 id="hub-title">🏝️ ברוכים הבאים לאי הדיבור — כיתה ד׳!</h2>
+        <p style="color:var(--text-muted);margin-top:0.25rem">
+          בחרו תחנה באי או לחצו על אחת המילים כדי לתרגל הגייה ודיבור במיקרופון:
+        </p>
+
+        <div class="zone-grid">
+          <div class="zone-card" onclick="document.querySelector('[data-screen=echo]').click()">
+            <div style="font-size:2rem">🎤✨</div>
+            <h3>שלב 1: קסם המילים</h3>
+            <p style="font-size:0.88rem;color:#475569">הקשיבו, היעזרו בטיפ ההגייה בעברית ואמרו את המילה או הצירוף!</p>
+          </div>
+          <div class="zone-card" onclick="document.querySelector('[data-screen=builder]').click()">
+            <div style="font-size:2rem">🧩🗣️</div>
+            <h3>שלב 2: בונים משפט</h3>
+            <p style="font-size:0.88rem;color:#475569">סדרו את המילים למשפט שלם באנגלית וקראו אותו בקול רם!</p>
+          </div>
+          <div class="zone-card" onclick="document.querySelector('[data-screen=boss]').click()">
+            <div style="font-size:2rem">👑🐶</div>
+            <h3>שלב 3: שיחה עם קוסמו</h3>
+            <p style="font-size:0.88rem;color:#475569">ענו לקוסמו באנגלית בשיחה אמיתית וזכו בגביע האי!</p>
+          </div>
+        </div>
+
+        <h3 style="margin-top:1rem">📚 אוצר המילים של השיעור (לחצו לתרגול מיידי):</h3>
+        <div id="hub-words-grid" class="word-grid"></div>
+      </div>
+
+      <!-- SCREEN 1: Echo Magic -->
+      <div id="screen-echo" class="screen-pane hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem">
+          <span id="echo-counter" style="font-weight:800;color:var(--primary)">מילה 1 מתוך 8</span>
+          <div style="display:flex;gap:0.4rem">
+            <button id="mode-word-btn" class="btn btn-soft active" style="padding:0.4rem 0.8rem">מילה בודדת</button>
+            <button id="mode-phrase-btn" class="btn btn-soft" style="padding:0.4rem 0.8rem">צירוף (2 מילים)</button>
+          </div>
+        </div>
+
+        <div class="flashcard">
+          <div id="echo-emoji" class="big-emoji">🥦🥕</div>
+          <div id="echo-en" class="en-target ltr">vegetables</div>
+          <div id="echo-he" style="font-size:1.25rem;font-weight:800;margin-top:0.2rem">ירקות</div>
+          <div id="echo-phonetic" class="phonetic-badge">וֶגְ׳-טֶ-בְּלְס</div>
+          <div id="echo-tip" class="tip-box"></div>
+
+          <div id="echo-wave" class="soundwave hidden" aria-label="מקליט דיבור">
+            <span></span><span></span><span></span><span></span>
+          </div>
+
+          <div style="display:flex;gap:0.55rem;justify-content:center;flex-wrap:wrap;margin-top:1rem">
+            <button id="echo-listen" class="btn btn-cyan">🔊 הקשיבו</button>
+            <button id="echo-turtle" class="btn btn-soft">🐢 מהירות צב</button>
+            <button id="echo-mic" class="btn btn-primary">🎤 דברו למיקרופון (והקליטו קולכם)</button>
+          </div>
+
+          <!-- Speech Examination Lab (No Mic Required) -->
+          <div class="sim-lab" aria-label="מעבדת בדיקת דיבור">
+            <div class="sim-lab-title">🧪 מעבדת בדיקת דיבור (בדיקה ללא מיקרופון)</div>
+            <div class="sim-lab-btns">
+              <button id="echo-sim-exact" class="btn btn-green btn-sm">✅ הדגם תשובה מדויקת</button>
+              <button id="echo-sim-partial" class="btn btn-amber btn-sm">🟡 הדגם הגייה חלקית/קרובה</button>
+              <button id="echo-sim-wrong" class="btn btn-danger btn-sm">❌ הדגם תשובה שגויה (0 נק׳)</button>
+            </div>
+            <div class="custom-test-row">
+              <label for="echo-custom-input" style="font-size:0.82rem;font-weight:700;color:#475569">בדיקה חופשית: הקלידו מה "נאמר" במיקרופון:</label>
+              <input id="echo-custom-input" type="text" class="custom-test-input" placeholder="למשל: tree / teef / banana" />
+              <button id="echo-custom-btn" class="btn btn-soft btn-sm">בדוק 🔎</button>
+            </div>
+          </div>
+
+          <div id="echo-feedback"></div>
+
+          <!-- Curiosity Mystery Box -->
+          <div id="echo-curiosity-box" class="curiosity-box curiosity-locked"></div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between">
+          <button id="echo-prev" class="btn btn-soft">➡️ המילה הקודמת</button>
+          <button id="echo-next" class="btn btn-soft">המילה הבאה ⬅️</button>
+        </div>
+      </div>
+
+      <!-- SCREEN 2: Sentence Builder -->
+      <div id="screen-builder" class="screen-pane hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span id="builder-counter" style="font-weight:800;color:var(--primary)">משפט 1 מתוך 4</span>
+          <button id="builder-next" class="btn btn-soft" style="padding:0.4rem 0.85rem">משפט הבא ⬅️</button>
+        </div>
+
+        <div class="flashcard">
+          <div id="builder-emoji" style="font-size:2.6rem">⚽ ➡️ 🍽️</div>
+          <div id="builder-he" style="font-size:1.3rem;font-weight:800;margin:0.3rem 0">הכדור על השולחן</div>
+          <button id="builder-listen" class="btn btn-cyan" style="margin:0.4rem 0">🔊 רמז קולי: שמעו את המשפט</button>
+
+          <div id="sentence-slot" class="sentence-slot" dir="ltr"></div>
+          <div id="tile-bank" class="tile-bank" dir="ltr"></div>
+
+          <div id="builder-speak-zone" class="hidden" style="margin-top:0.8rem">
+            <div style="display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap">
+              <button id="builder-mic" class="btn btn-primary">🎤 קראו את המשפט בקול</button>
+            </div>
+            <div class="sim-lab" aria-label="מעבדת בדיקת דיבור למשפטים">
+              <div class="sim-lab-title">🧪 מעבדת בדיקת דיבור (בדיקה ללא מיקרופון)</div>
+              <div class="sim-lab-btns">
+                <button id="builder-sim-exact" class="btn btn-green btn-sm">✅ הדגם תשובה מדויקת</button>
+                <button id="builder-sim-partial" class="btn btn-amber btn-sm">🟡 הדגם הגייה חלקית/קרובה</button>
+                <button id="builder-sim-wrong" class="btn btn-danger btn-sm">❌ הדגם תשובה שגויה (0 נק׳)</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="builder-feedback"></div>
+        </div>
+      </div>
+
+      <!-- SCREEN 3: Boss Chat with Cosmo -->
+      <div id="screen-boss" class="screen-pane hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span id="boss-step" style="font-weight:800;color:var(--primary)">שאלה 1 מתוך 3</span>
+          <button id="boss-next" class="btn btn-soft" style="padding:0.4rem 0.85rem">השאלה הבאה ⬅️</button>
+        </div>
+
+        <div class="flashcard">
+          <div style="font-weight:800;color:#6d28d9">🐶 קוסמו שואל אתכם באנגלית:</div>
+          <div id="boss-q-en" class="en-target ltr" style="font-size:1.85rem;margin-top:0.25rem">What is on the table?</div>
+          <div id="boss-q-he" style="color:#475569;font-weight:700;margin-bottom:0.5rem">מה נמצא על השולחן?</div>
+          <button id="boss-listen-q" class="btn btn-cyan" style="padding:0.45rem 0.9rem">🔊 שמעו את קוסמו שואל</button>
+
+          <h3 style="margin-top:1rem;font-size:1rem">1. בחרו תשובה מתאימה:</h3>
+          <div id="boss-options" class="zone-grid"></div>
+
+          <h3 style="margin-top:0.75rem;font-size:1rem">2. אמרו את התשובה שבחרתם בקול רם לקוסמו:</h3>
+          <div style="display:flex;gap:0.55rem;justify-content:center;flex-wrap:wrap;margin-top:0.5rem">
+            <button id="boss-mic" class="btn btn-primary">🎤 ענו לקוסמו במיקרופון</button>
+          </div>
+          <div class="sim-lab" aria-label="מעבדת בדיקת דיבור לשיחה עם קוסמו">
+            <div class="sim-lab-title">🧪 מעבדת בדיקת דיבור (בדיקה ללא מיקרופון)</div>
+            <div class="sim-lab-btns">
+              <button id="boss-sim-exact" class="btn btn-green btn-sm">✅ הדגם תשובה מדויקת</button>
+              <button id="boss-sim-partial" class="btn btn-amber btn-sm">🟡 הדגם הגייה חלקית/קרובה</button>
+              <button id="boss-sim-wrong" class="btn btn-danger btn-sm">❌ הדגם תשובה שגויה (0 נק׳)</button>
+            </div>
+          </div>
+
+          <div id="boss-feedback"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Grade Locked Dialog -->
+  <dialog id="grade-dialog">
+    <h3>🔒 שכבת גיל בדמו</h3>
+    <p style="margin:0.65rem 0">
+      השלבים של <strong id="locked-grade-name"></strong> ייפתחו בגרסה המלאה של בית הספר!
+      בדמו הנוכחי תוכלו לשחק ולעבור חופשי בין <strong>כיתה ב׳ 🌟</strong> ו-<strong>כיתה ד׳ ⭐</strong>!
+    </p>
+    <form method="dialog" style="text-align:left">
+      <button class="btn btn-primary">הבנתי, נחזור למשחק!</button>
+    </form>
+  </dialog>
+
+  <!-- Accessory Shop Dialog -->
+  <dialog id="shop-dialog">
+    <h3>🎩 חנות האביזרים של קוסמו</h3>
+    <p style="font-size:0.9rem;color:#475569;margin:0.35rem 0 0.75rem">
+      השתמשו במטבעות שהרווחתם מדיבור באנגלית כדי לקנות ולהלביש את קוסמו:
+    </p>
+    <div id="shop-items-list" class="daily-list" style="margin-bottom:1rem"></div>
+    <form method="dialog" style="text-align:left">
+      <button class="btn btn-primary">סגירה</button>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
