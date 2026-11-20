@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>מבצע חילוץ החללית של קוסמו — SpeakQuest V2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Rubik:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <canvas id="confetti-canvas" aria-hidden="true"></canvas>
+
+  <!-- Top Navigation & HUD -->
+  <header class="top-bar">
+    <div class="brand">
+      <span class="brand-logo" aria-hidden="true">🛸</span>
+      <div>
+        <div class="brand-title">
+          <span class="v2-pill">V2</span>
+          מבצע חילוץ החללית של קוסמו
+        </div>
+      </div>
+    </div>
+
+    <div class="top-controls">
+      <div class="grade-pill-group" role="group" aria-label="בחירת שכבת גיל">
+        <button type="button" class="grade-btn active" data-grade="g2" id="btn-grade-g2">כיתה ב׳ 🌟 פתוח!</button>
+        <button type="button" class="grade-btn locked" disabled title="ייפתח בגרסה המלאה">כיתה ג׳ 🔒</button>
+        <button type="button" class="grade-btn" data-grade="g4" id="btn-grade-g4">כיתה ד׳ ⭐ פתוח!</button>
+        <button type="button" class="grade-btn locked" disabled title="ייפתח בגרסה המלאה">כיתה ה׳ 🔒</button>
+        <button type="button" class="grade-btn locked" disabled title="ייפתח בגרסה המלאה">כיתה ו׳ 🔒</button>
+      </div>
+
+      <label class="teacher-override-label" for="unlock-all-toggle">
+        <input type="checkbox" id="unlock-all-toggle" />
+        <span>🔓 מצב מורה/בדיקה: פתח את כל השלבים</span>
+      </label>
+    </div>
+
+    <div class="hud-stats">
+      <button type="button" class="stat-chip clickable" id="btn-open-story" title="הצג את סיפור המשימה">
+        📖 סיפור המשימה
+      </button>
+      <div class="stat-chip" title="כוכבי דיבור">
+        ⭐ <span id="hud-stars">0</span>
+      </div>
+      <div class="stat-chip" title="מטבעות חלל">
+        🪙 <span id="hud-coins">20</span>
+      </div>
+      <button type="button" class="stat-chip clickable" id="btn-open-shop">
+        🛍️ חנות קוסמו
+      </button>
+      <button type="button" class="stat-chip clickable" id="btn-reset-progress" title="איפוס משימה">
+        🔄 איפוס
+      </button>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <!-- 1. Story Hook & Mission Comic Banner -->
+    <section class="story-banner" id="story-banner" aria-label="סיפור המשימה">
+      <div class="story-banner-header">
+        <h1 class="story-banner-title">🚀 החללית של קוסמו נחתה נחיתת חירום!</h1>
+        <button type="button" class="btn btn-gold" id="btn-dismiss-story">
+          🚀 הבנתי! בואו נציל את החללית!
+        </button>
+      </div>
+      <div class="comic-strip">
+        <article class="comic-panel">
+          <span class="comic-panel-num">פאנל 1</span>
+          <p class="comic-panel-text">💥 אוי לא! החללית של קוסמו נחתה נחיתת חירום על אי האנגלית!</p>
+        </article>
+        <article class="comic-panel">
+          <span class="comic-panel-num">פאנל 2</span>
+          <p class="comic-panel-text">⚡ המחשב של החללית מבין רק אנרגיית קול באנגלית!</p>
+        </article>
+        <article class="comic-panel">
+          <span class="comic-panel-num">פאנל 3</span>
+          <p class="comic-panel-text">🏆 המטרה שלכם כדי לנצח: 1) טענו 4 גבישי קול 💎 -> 2) תקנו 2 מנועי משפט 🔧 -> 3) שברו את 3 המגנים של החייזר זורג 👾 ושגרו את החללית!</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- 2. Visual Spaceship Repair & Launch Meter (0% to 100%) -->
+    <section class="spaceship-meter-card" aria-label="מד תיקון ושיגור החללית">
+      <div class="meter-top-row">
+        <div class="spaceship-status-box">
+          <div class="spaceship-visual" id="spaceship-visual" aria-hidden="true">🛸</div>
+          <div>
+            <div class="meter-title">
+              מד תיקון ושיגור החללית — <span id="spaceship-meter-pct">0%</span>
+            </div>
+            <div class="meter-state-desc" id="spaceship-state-text">
+              🛸💨 חללית כבויה — צריכה 4 גבישי מילים (0/4)
+            </div>
+          </div>
+        </div>
+
+        <div class="badges-row">
+          <span class="rank-badge" id="player-rank-badge">דרגה: טירון חלל 🥉</span>
+          <span class="streak-badge" id="streak-badge">🔥 רצף x0</span>
+          <span class="turtle-shield-indicator hidden" id="turtle-shield-badge">🐢 מגן הצלה הופעל!</span>
+        </div>
+      </div>
+
+      <div class="meter-bar-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="spaceship-progressbar">
+        <div class="meter-bar-fill" id="spaceship-meter-fill"></div>
+      </div>
+
+      <div class="meter-checkpoints">
+        <span id="cp-crystals">💎 גבישי קול: 0/4</span>
+        <span id="cp-engines">🔧 מנועי משפט: 0/2</span>
+        <span id="cp-shields">🛡️ מגני זורג שנשברו: 0/3</span>
+      </div>
+    </section>
+
+    <!-- Cosmo Companion & Fanfare Unlock Notification -->
+    <section class="cosmo-strip" aria-live="polite">
+      <div class="cosmo-avatar-wrap">
+        <span id="cosmo-base-emoji" aria-hidden="true">🐶</span>
+        <span class="cosmo-accessory" id="cosmo-accessory-emoji" aria-hidden="true">🧑‍🚀</span>
+      </div>
+      <div class="cosmo-bubble">
+        <div class="cosmo-name">קוסמו הכלב האסטרונאוט (<span id="active-grade-label">כיתה ב׳</span>)</div>
+        <p class="cosmo-speech" id="cosmo-speech-text">
+          שלום חברים! החללית שלי כבויה 🛸💨. בואו ניכנס למערת גבישי הקול ונטען 4 גבישים באנגלית!
+        </p>
+      </div>
+    </section>
+
+    <div class="fanfare-banner hidden" id="fanfare-banner" role="status">
+      <span id="fanfare-text">🎉 כל הכבוד! פתחתם שלב חדש במסע!</span>
+      <button type="button" class="btn btn-primary" id="btn-fanfare-go">המשך לשלב הבא 🚀</button>
+    </div>
+
+    <!-- Stage Navigation Tabs -->
+    <nav class="stage-tabs" aria-label="שלבי המשחק">
+      <button type="button" class="stage-tab active" data-target="screen-hub" id="tab-hub">
+        🗺️ מפת המשימה
+      </button>
+      <button type="button" class="stage-tab" data-target="screen-stage1" id="tab-stage1">
+        💎 שלב 1: גבישי הקול (<span id="tab-crystals-count">0/4</span>)
+      </button>
+      <button type="button" class="stage-tab locked-tab" data-target="screen-stage2" id="tab-stage2">
+        <span id="tab-stage2-lock">🔒</span> שלב 2: מנועי משפט (<span id="tab-engines-count">0/2</span>)
+      </button>
+      <button type="button" class="stage-tab locked-tab" data-target="screen-stage3" id="tab-stage3">
+        <span id="tab-stage3-lock">🔒</span> שלב 3: קרב הבוס זורג (<span id="tab-boss-count">3🛡️</span>)
+      </button>
+      <button type="button" class="stage-tab hidden" data-target="screen-victory" id="tab-victory">
+        🏆 מסך הניצחון והתיבות!
+      </button>
+    </nav>
+
+    <!-- SCREEN 0: QUEST HUB (3-Stage Progression Ladder) -->
+    <section class="screen active" id="screen-hub" aria-label="מפת המשימה">
+      <div class="screen-header">
+        <div>
+          <h2 class="screen-title">🗺️ מפת חילוץ החללית — 3 שלבים לשיגור!</h2>
+          <p class="screen-subtitle">השלימו כל שלב כדי לפתוח את השלב הבא ולשגר את קוסמו הביתה</p>
+        </div>
+      </div>
+
+      <div class="quest-ladder-grid">
+        <!-- Stage 1 Card -->
+        <article class="quest-stage-card unlocked" id="hub-card-stage1">
+          <div>
+            <span class="stage-step-pill" id="hub-pill-stage1">שלב 1 — פתוח! 🟢</span>
+            <div class="quest-stage-icon" aria-hidden="true">💎🎙️</div>
+            <h3 class="quest-stage-title">שלב 1: מערת גבישי הקול</h3>
+            <p class="quest-stage-desc">
+              אמרו מילים באנגלית בקול ברור (לפחות 2 כוכבים ⭐⭐) כדי להטעין 4 גבישי קול לסוללת החללית!
+            </p>
+          </div>
+          <div>
+            <div class="stage-req-box" id="hub-progress-stage1">💎 התקדמות: 0 / 4 גבישים טעונים (מתוך 8 מילים)</div>
+            <button type="button" class="btn btn-primary" style="width:100%; margin-top:10px;" id="btn-enter-stage1">
+              🚀 כניסה לשלב 1
+            </button>
+          </div>
+        </article>
+
+        <!-- Stage 2 Card -->
+        <article class="quest-stage-card locked" id="hub-card-stage2">
+          <div>
+            <span class="stage-step-pill" id="hub-pill-stage2">שלב 2 — נעול 🔒</span>
+            <div class="quest-stage-icon" aria-hidden="true">🔧🛸</div>
+            <h3 class="quest-stage-title">שלב 2: מוסך קודי המנוע</h3>
+            <p class="quest-stage-desc">
+              הרכיבו משפטים שלמים באנגלית וקראו אותם בקול למיקרופון כדי לתקן את 2 כנפי המנוע של החללית!
+            </p>
+          </div>
+          <div>
+            <div class="stage-req-box" id="hub-progress-stage2">🔒 דרישה לפתיחה: טענו 4 גבישי קול בשלב 1</div>
+            <button type="button" class="btn btn-primary" style="width:100%; margin-top:10px;" id="btn-enter-stage2" disabled>
+              🔒 השלימו את שלב 1 קודם
+            </button>
+          </div>
+        </article>
+
+        <!-- Stage 3 Card -->
+        <article class="quest-stage-card locked" id="hub-card-stage3">
+          <div>
+            <span class="stage-step-pill" id="hub-pill-stage3">שלב 3 — נעול 🔒</span>
+            <div class="quest-stage-icon" aria-hidden="true">👾🛡️</div>
+            <h3 class="quest-stage-title">שלב 3: קרב הבוס — זורג שומר השער!</h3>
+            <p class="quest-stage-desc">
+              זורג החייזר המבולבל חוסם את מסלול ההמראה עם 3 מגנים (🛡️🛡️🛡️)! ענו לו באנגלית בקול כדי לשבור את המגנים!
+            </p>
+          </div>
+          <div>
+            <div class="stage-req-box" id="hub-progress-stage3">🔒 דרישה לפתיחה: תקנו 2 מנועי משפט בשלב 2</div>
+            <button type="button" class="btn btn-primary" style="width:100%; margin-top:10px;" id="btn-enter-stage3" disabled>
+              🔒 השלימו את שלב 2 קודם
+            </button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- SCREEN 1: STAGE 1 — VOICE CRYSTALS CAVE -->
+    <section class="screen" id="screen-stage1" aria-label="שלב 1: מערת גבישי הקול">
+      <div class="screen-header">
+        <div>
+          <h2 class="screen-title">💎 שלב 1: מערת גבישי הקול</h2>
+          <p class="screen-subtitle">בחרו מילה, הקשיבו להגייה, ואמרו אותה באנגלית כדי להטעין 4 גבישי קול!</p>
+        </div>
+        <button type="button" class="btn btn-outline" data-back-hub>⬅️ חזרה למפה</button>
+      </div>
+
+      <div class="word-selector-grid" id="stage1-word-grid" aria-label="רשימת מילים להטענה"></div>
+
+      <div class="flashcard-stage">
+        <div class="word-emoji-big" id="s1-word-emoji">🐱</div>
+        <div class="word-english-big ltr" id="s1-word-en">cat</div>
+        <div class="word-hebrew-sub" id="s1-word-he">חתול</div>
+        <div class="phonetic-pill" id="s1-word-phonetic">הגייה בעברית: קאט (ca-t)</div>
+
+        <div class="audio-actions-row">
+          <button type="button" class="btn btn-primary" id="btn-s1-listen-normal">🔊 הקשיבו למילה</button>
+          <button type="button" class="btn btn-gold" id="btn-s1-listen-slow">🐢 הקשיבו לאט (מצב צב)</button>
+        </div>
+
+        <!-- Curiosity Mystery Box -->
+        <div class="mystery-box-card">
+          <button type="button" class="btn btn-outline" id="btn-s1-mystery" style="width:100%;">
+            🥚 תיבת הסודות של קוסמו — לחצו לגלות עובדה מפתיעה!
+          </button>
+          <p class="mystery-fact-text hidden" id="s1-mystery-text"></p>
+        </div>
+
+        <!-- Microphone Button -->
+        <button type="button" class="mic-btn-big" id="btn-s1-mic">
+          🎙️ לחצו ודברו באנגלית!
+        </button>
+
+        <!-- 3-Outcome Speech Examiner Simulator -->
+        <div class="simulator-box">
+          <div class="simulator-title">🧪 סימולטור בוחן דיבור (למחשב ללא מיקרופון או לבדיקת ניקוד קפדנית):</div>
+          <div class="simulator-btns">
+            <button type="button" class="sim-btn exact" data-sim-stage="1" data-sim-mode="exact">✅ מדויק (3⭐)</button>
+            <button type="button" class="sim-btn partial" data-sim-stage="1" data-sim-mode="partial">🟡 קרוב/חלקי (2⭐)</button>
+            <button type="button" class="sim-btn wrong" data-sim-stage="1" data-sim-mode="wrong">❌ שגוי (0 נק׳ + מגן צב 🐢)</button>
+          </div>
+          <div class="sim-custom-row">
+            <input type="text" class="sim-input ltr" id="sim-input-s1" placeholder="Type custom speech transcript..." aria-label="הזינו טקסט באנגלית לבדיקה" />
+            <button type="button" class="btn btn-primary" id="btn-sim-custom-s1">בדוק טקסט</button>
+          </div>
+        </div>
+
+        <!-- Speech Evaluation Feedback Card -->
+        <div class="feedback-card hidden" id="feedback-s1" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- SCREEN 2: STAGE 2 — ENGINE SENTENCE GARAGE -->
+    <section class="screen" id="screen-stage2" aria-label="שלב 2: מוסך קודי המנוע">
+      <div class="screen-header">
+        <div>
+          <h2 class="screen-title">🔧 שלב 2: מוסך קודי המנוע</h2>
+          <p class="screen-subtitle">הרכיבו את המשפט בסדר הנכון ואז קראו אותו בקול למיקרופון כדי לתקן 2 מנועים!</p>
+        </div>
+        <button type="button" class="btn btn-outline" data-back-hub>⬅️ חזרה למפה</button>
+      </div>
+
+      <div class="word-selector-grid" id="stage2-sentence-grid" aria-label="בחירת מנוע משפט"></div>
+
+      <div class="sentence-builder-card">
+        <div class="word-hebrew-sub" id="s2-prompt-he">הרכיבו באנגלית: "החתול הוא אדום"</div>
+
+        <div class="assembled-slots" id="s2-assembled-slots" aria-label="המשפט שהורכב"></div>
+        <div class="word-bank" id="s2-word-bank" aria-label="מחסן מילים"></div>
+
+        <div class="audio-actions-row">
+          <button type="button" class="btn btn-outline" id="btn-s2-clear">🧹 נקה משפט</button>
+          <button type="button" class="btn btn-primary" id="btn-s2-listen-normal">🔊 הקשיבו למשפט</button>
+          <button type="button" class="btn btn-gold" id="btn-s2-listen-slow">🐢 הקשיבו לאט</button>
+        </div>
+
+        <button type="button" class="mic-btn-big" id="btn-s2-mic">
+          🎙️ קראו את המשפט שהרכבתם!
+        </button>
+
+        <!-- Simulator for Stage 2 -->
+        <div class="simulator-box">
+          <div class="simulator-title">🧪 סימולטור בוחן דיבור למשפטים:</div>
+          <div class="simulator-btns">
+            <button type="button" class="sim-btn exact" data-sim-stage="2" data-sim-mode="exact">✅ מדויק (3⭐)</button>
+            <button type="button" class="sim-btn partial" data-sim-stage="2" data-sim-mode="partial">🟡 קרוב/חלקי (2⭐)</button>
+            <button type="button" class="sim-btn wrong" data-sim-stage="2" data-sim-mode="wrong">❌ שגוי (0 נק׳ + מגן צב 🐢)</button>
+          </div>
+          <div class="sim-custom-row">
+            <input type="text" class="sim-input ltr" id="sim-input-s2" placeholder="Type custom sentence transcript..." aria-label="הזינו משפט באנגלית לבדיקה" />
+            <button type="button" class="btn btn-primary" id="btn-sim-custom-s2">בדוק משפט</button>
+          </div>
+        </div>
+
+        <div class="feedback-card hidden" id="feedback-s2" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- SCREEN 3: STAGE 3 — BOSS BATTLE WITH ZORG -->
+    <section class="screen" id="screen-stage3" aria-label="שלב 3: קרב הבוס זורג">
+      <div class="screen-header">
+        <div>
+          <h2 class="screen-title">👾 שלב 3: קרב הבוס — זורג שומר השער!</h2>
+          <p class="screen-subtitle">בחרו את התשובה הנכונה ואמרו אותה באנגלית בקול כדי לירות קרן לייזר ולשבור את 3 המגנים של זורג!</p>
+        </div>
+        <button type="button" class="btn btn-outline" data-back-hub>⬅️ חזרה למפה</button>
+      </div>
+
+      <!-- Zorg Boss Arena -->
+      <div class="zorg-arena" id="zorg-boss-card">
+        <div class="zorg-top-row">
+          <div class="zorg-character">
+            <div class="zorg-avatar" id="zorg-avatar" aria-hidden="true">👾</div>
+            <div>
+              <h3 style="font-size:1.3rem; font-weight:800; color:#f9a8d4;">זורג החייזר המבולבל — שומר השער</h3>
+              <p style="font-size:0.92rem; color:#e2e8f0;" id="zorg-round-label">שאלה 1 מתוך 3</p>
+            </div>
+          </div>
+          <div class="zorg-shields" id="zorg-shields-display" aria-label="מגני הבוס של זורג">
+            🛡️ 🛡️ 🛡️
+          </div>
+        </div>
+
+        <div class="zorg-speech-box" id="zorg-speech">
+          👾 זורג אומר: "בליפ-בלופ! לא אתן לחללית שלכם להמריא עד שתענו לי באנגלית!"
+        </div>
+      </div>
+
+      <div class="flashcard-stage">
+        <div class="word-hebrew-sub" id="s3-question-he"></div>
+        <div class="word-english-big ltr" id="s3-question-en" style="font-size:1.55rem;"></div>
+
+        <div class="boss-options-grid" id="s3-options-grid" aria-label="אפשרויות תשובה לבוס"></div>
+
+        <div class="phonetic-pill" id="s3-selected-target">בחרו תשובה ואמרו אותה למיקרופון!</div>
+
+        <div class="audio-actions-row">
+          <button type="button" class="btn btn-primary" id="btn-s3-listen-normal">🔊 הקשיבו לתשובה</button>
+          <button type="button" class="btn btn-gold" id="btn-s3-listen-slow">🐢 הקשיבו לאט</button>
+        </div>
+
+        <button type="button" class="mic-btn-big" id="btn-s3-mic">
+          🎙️ אמרו את התשובה ושגרו לייזר קולי! ⚡
+        </button>
+
+        <!-- Simulator for Stage 3 -->
+        <div class="simulator-box">
+          <div class="simulator-title">🧪 סימולטור בוחן דיבור מול הבוס זורג:</div>
+          <div class="simulator-btns">
+            <button type="button" class="sim-btn exact" data-sim-stage="3" data-sim-mode="exact">✅ מדויק — שבור מגן! (3⭐)</button>
+            <button type="button" class="sim-btn partial" data-sim-stage="3" data-sim-mode="partial">🟡 קרוב/חלקי — שבור מגן! (2⭐)</button>
+            <button type="button" class="sim-btn wrong" data-sim-stage="3" data-sim-mode="wrong">❌ שגוי (0 נק׳ + מגן צב 🐢)</button>
+          </div>
+          <div class="sim-custom-row">
+            <input type="text" class="sim-input ltr" id="sim-input-s3" placeholder="Type custom boss answer..." aria-label="הזינו תשובה לבוס באנגלית" />
+            <button type="button" class="btn btn-primary" id="btn-sim-custom-s3">בדוק תשובה</button>
+          </div>
+        </div>
+
+        <div class="feedback-card hidden" id="feedback-s3" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- SCREEN 4: GRAND VICTORY & CHOOSE-A-TREASURE-CHEST -->
+    <section class="screen" id="screen-victory" aria-label="מסך הניצחון הגדול">
+      <div class="victory-showcase">
+        <div class="victory-rocket-hero" aria-hidden="true">🌟🚀🐶👾🎉</div>
+        <h2 class="screen-title" style="font-size:2rem; color:var(--primary);">
+          ניצחון אדיר! החללית של קוסמו שוגרה לחלל!
+        </h2>
+        <p class="screen-subtitle" style="font-size:1.1rem; max-width:600px;">
+          שברתם את כל 3 המגנים של זורג, תיקנתם את החללית ל-100%, והועליתם לדרגת <strong>קפטן אנגלית 🥇</strong>!
+        </p>
+
+        <div class="rank-badge" style="font-size:1.15rem; padding:10px 22px;">
+          🎖️ דרגה חדשה: קפטן אנגלית 🥇
+        </div>
+
+        <h3 style="margin-top:10px; font-size:1.3rem;">🎁 בחרו תיבת אוצר מסתורית אחת לקבלת פרס הניצחון:</h3>
+
+        <div class="chests-grid" id="victory-chests-grid">
+          <button type="button" class="chest-card" data-chest-id="star">
+            <span class="chest-icon" aria-hidden="true">🎁</span>
+            <strong>🎁 תיבת כוכב</strong>
+            <span>לחצו לפתיחת התיבה!</span>
+          </button>
+          <button type="button" class="chest-card" data-chest-id="galaxy">
+            <span class="chest-icon" aria-hidden="true">🎁</span>
+            <strong>🎁 תיבת גלקסיה</strong>
+            <span>לחצו לפתיחת התיבה!</span>
+          </button>
+          <button type="button" class="chest-card" data-chest-id="supernova">
+            <span class="chest-icon" aria-hidden="true">🎁</span>
+            <strong>🎁 תיבת סופר-נובה</strong>
+            <span>לחצו לפתיחת התיבה!</span>
+          </button>
+        </div>
+
+        <div class="feedback-card stars-3 hidden" id="victory-chest-reward" aria-live="polite"></div>
+
+        <div class="audio-actions-row" style="margin-top:14px;">
+          <button type="button" class="btn btn-primary" id="btn-victory-open-shop">🛍️ הלבישו את קוסמו בחנות</button>
+          <button type="button" class="btn btn-gold" id="btn-victory-play-again">🔄 שחקו שוב או נסו כיתה אחרת</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Cosmo Space Shop Dialog (<dialog> with light-dismiss) -->
+  <dialog class="modal-dialog" id="shop-dialog" aria-labelledby="shop-dialog-title">
+    <div class="modal-inner">
+      <div class="screen-header">
+        <div>
+          <h2 class="screen-title" id="shop-dialog-title">🛍️ חנות האביזרים של קוסמו</h2>
+          <p class="screen-subtitle">השתמשו במטבעות שהרווחתם בדיבור באנגלית כדי לשדרג את קוסמו!</p>
+        </div>
+        <button type="button" class="btn btn-outline" id="btn-close-shop">✖ סגור</button>
+      </div>
+      <div style="font-weight:800; margin-bottom:8px;">
+        המטבעות שלכם: 🪙 <span id="shop-coins-count">20</span>
+      </div>
+      <div class="shop-grid" id="shop-items-grid"></div>
+    </div>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
