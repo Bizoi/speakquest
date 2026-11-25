@@ -128,7 +128,7 @@ const CHUNKS_DRILLS = [
     promptHe: 'אתם ממש רעבים ורוצים כריך. איך תגידו זאת באנגלית?',
     sentenceEn: "___! I want a sandwich.",
     targetAnswer: "I'm hungry",
-    choices: ["I'm hungry", "I'm thirsty", "It is twelve"],
+    choices: ["I'm hungry", "I'm thirsty", "It is twelve", "Yesterday was"],
     fullSpeakEn: "I'm hungry! I want a sandwich.",
     hint: "hungry = רעב (thirsty = צמא)"
   },
@@ -138,7 +138,7 @@ const CHUNKS_DRILLS = [
     promptHe: 'חבר שואל אתכם במסיבה: "What do you want?" (מה אתם רוצים?). מה תענו?',
     sentenceEn: "___ cheese and chips.",
     targetAnswer: "I want",
-    choices: ["I want", "Yesterday was", "What time"],
+    choices: ["I want", "Yesterday was", "What time", "No, I don't"],
     fullSpeakEn: "I want cheese and chips.",
     hint: "כששואלים What do you want עונים באותו פועל: I want..."
   },
@@ -148,7 +148,7 @@ const CHUNKS_DRILLS = [
     promptHe: 'אנחנו מכינים סלט במטבח. השלימו את השאלה והתשובה: "מה אתה צריך? אני צריך עגבנייה."',
     sentenceEn: "What do you need? ___ a tomato.",
     targetAnswer: "I need",
-    choices: ["I need", "No, I don't", "It is eleven"],
+    choices: ["I need", "No, I don't", "It is eleven", "Tomorrow will be"],
     fullSpeakEn: "I need a tomato.",
     hint: "need = צריך. השאלה עם need והתשובה עם I need"
   },
@@ -158,7 +158,7 @@ const CHUNKS_DRILLS = [
     promptHe: 'איך מבקשים באנגלית: "שים את הגבינה על השולחן"?',
     sentenceEn: "___ the cheese on the table.",
     targetAnswer: "Put",
-    choices: ["Put", "Drink", "Twelve"],
+    choices: ["Put", "Drink", "Twelve", "Wash"],
     fullSpeakEn: "Put the cheese on the table.",
     hint: "התבנית put (משהו) (איפשהו) משמעותה לשים משהו במקום מסוים"
   },
@@ -168,7 +168,7 @@ const CHUNKS_DRILLS = [
     promptHe: 'שואלים אתכם: "What is your favorite food?" (מה האוכל האהוב עליכם?). איך תתחילו את התשובה?',
     sentenceEn: "___ is chocolate!",
     targetAnswer: "My favorite food",
-    choices: ["My favorite food", "Tomorrow will be", "Wash your teeth"],
+    choices: ["My favorite food", "Tomorrow will be", "Wash your teeth", "What time is"],
     fullSpeakEn: "My favorite food is chocolate.",
     hint: "favorite = אהוב / מועדף. My favorite food is..."
   },
@@ -178,7 +178,7 @@ const CHUNKS_DRILLS = [
     promptHe: 'שואלים אתכם: "What time is it?" (מה השעה?), והשעון מראה 12:00. מה תענו?',
     sentenceEn: "___ twelve o'clock.",
     targetAnswer: "It is",
-    choices: ["It is", "I need", "Yes, I do"],
+    choices: ["It is", "I need", "Yes, I do", "I want"],
     fullSpeakEn: "It is twelve o'clock.",
     hint: "בשעון תמיד עונים: It is ___ o'clock"
   },
@@ -188,7 +188,7 @@ const CHUNKS_DRILLS = [
     promptHe: 'שואלים אתכם: "Do you want fish?" ואתם דווקא כן רוצים! מה התשובה המתאימה?',
     sentenceEn: "Do you want fish? ___",
     targetAnswer: "Yes, I do.",
-    choices: ["Yes, I do.", "No, I don't.", "Today is Sunday."],
+    choices: ["Yes, I do.", "No, I don't.", "Today is Sunday.", "It is twelve."],
     fullSpeakEn: "Yes, I do.",
     hint: "שאלה שמתחילה ב-Do you... נענית בחיוב עם Yes, I do."
   },
@@ -198,7 +198,7 @@ const CHUNKS_DRILLS = [
     promptHe: 'שואלים אתכם: "Do you want onion in your milkshake?" (בצל במילקשייק?! לא תודה!). מה תענו?',
     sentenceEn: "Do you want onion? ___",
     targetAnswer: "No, I don't.",
-    choices: ["No, I don't.", "Yes, I do.", "It is fifteen."],
+    choices: ["No, I don't.", "Yes, I do.", "It is fifteen.", "My favorite food."],
     fullSpeakEn: "No, I don't.",
     hint: "כשלא רוצים עונים: No, I don't."
   },
@@ -208,7 +208,7 @@ const CHUNKS_DRILLS = [
     promptHe: 'שואלים אתכם: "What day is it today?" (איזה יום היום?). השלימו את התשובה:',
     sentenceEn: "___ Sunday.",
     targetAnswer: "Today is",
-    choices: ["Today is", "I want", "My favorite"],
+    choices: ["Today is", "I want", "My favorite", "Open your"],
     fullSpeakEn: "Today is Sunday.",
     hint: "today = היום. Today is..."
   },
@@ -218,7 +218,7 @@ const CHUNKS_DRILLS = [
     promptHe: 'איך אומרים באנגלית: "אתמול היה יום שבת"?',
     sentenceEn: "___ Saturday.",
     targetAnswer: "Yesterday was",
-    choices: ["Yesterday was", "Tomorrow will be", "Today is"],
+    choices: ["Yesterday was", "Tomorrow will be", "Today is", "I need"],
     fullSpeakEn: "Yesterday was Saturday.",
     hint: "yesterday = אתמול (זמן עבר הולך עם was)"
   },
@@ -228,7 +228,7 @@ const CHUNKS_DRILLS = [
     promptHe: 'איך אומרים באנגלית: "מחר יהיה יום שני"?',
     sentenceEn: "___ Monday.",
     targetAnswer: "Tomorrow will be",
-    choices: ["Tomorrow will be", "Yesterday was", "What time is"],
+    choices: ["Tomorrow will be", "Yesterday was", "What time is", "No, I don't"],
     fullSpeakEn: "Tomorrow will be Monday.",
     hint: "tomorrow = מחר (זמן עתיד הולך עם will be)"
   },
@@ -238,7 +238,7 @@ const CHUNKS_DRILLS = [
     promptHe: 'באיזו אות חייבים להתחיל את שמות ימות השבוע באנגלית (כמו Sunday, Monday)?',
     sentenceEn: "Start days with a ___.",
     targetAnswer: "capital letter",
-    choices: ["capital letter", "short salad", "green spinach"],
+    choices: ["capital letter", "short salad", "green spinach", "sweet cookie"],
     fullSpeakEn: "Big capital letter",
     hint: "אות גדולה באנגלית נקראת capital letter"
   },
@@ -248,7 +248,7 @@ const CHUNKS_DRILLS = [
     promptHe: 'רצתם בחצר ואתם ממש צמאים למים קרים. מה תגידו?',
     sentenceEn: "___! Drink cold water.",
     targetAnswer: "I'm thirsty",
-    choices: ["I'm thirsty", "I'm hungry", "Yesterday was"],
+    choices: ["I'm thirsty", "I'm hungry", "Yesterday was", "It is eleven"],
     fullSpeakEn: "I'm thirsty! Drink cold water.",
     hint: "thirsty = צמא (עם th 👅)"
   },
@@ -258,7 +258,7 @@ const CHUNKS_DRILLS = [
     promptHe: 'איך נציע לחבר: "נכין כריך ונחלוק עוגייה"?',
     sentenceEn: "Make a sandwich and ___ a cookie.",
     targetAnswer: "share",
-    choices: ["share", "wash", "thirteen"],
+    choices: ["share", "wash", "thirteen", "sleep"],
     fullSpeakEn: "Share a cookie",
     hint: "לחלוק/לשתף באנגלית = share (מתחיל ב-sh)"
   }
@@ -281,7 +281,7 @@ const DAYS_TIMELINE_DRILLS = [
     questionHe: 'היום יום ראשון (Sunday). איזה יום יהיה מחר (Tomorrow will be)?',
     sentenceEn: 'Today is Sunday. Tomorrow will be ___.',
     targetAnswer: 'Monday',
-    choices: ['Monday', 'Saturday', 'Friday'],
+    choices: ['Monday', 'Saturday', 'Friday', 'Wednesday'],
     speakEn: 'Tomorrow will be Monday.',
     hint: 'אחרי Sunday (יום א׳) מגיע יום שני: Monday'
   },
@@ -291,7 +291,7 @@ const DAYS_TIMELINE_DRILLS = [
     questionHe: 'היום יום ראשון (Sunday). איזה יום היה אתמול (Yesterday was)?',
     sentenceEn: 'Today is Sunday. Yesterday was ___.',
     targetAnswer: 'Saturday',
-    choices: ['Saturday', 'Tuesday', 'Wednesday'],
+    choices: ['Saturday', 'Tuesday', 'Wednesday', 'Thursday'],
     speakEn: 'Yesterday was Saturday.',
     hint: 'לפני יום ראשון (Sunday) נמצא יום שבת: Saturday'
   },
@@ -301,7 +301,7 @@ const DAYS_TIMELINE_DRILLS = [
     questionHe: 'היום יום שלישי (Tuesday). איזה יום יהיה מחר (Tomorrow will be)?',
     sentenceEn: 'Today is Tuesday. Tomorrow will be ___.',
     targetAnswer: 'Wednesday',
-    choices: ['Wednesday', 'Monday', 'Thursday'],
+    choices: ['Wednesday', 'Monday', 'Thursday', 'Sunday'],
     speakEn: 'Today is Tuesday.',
     hint: 'אחרי Tuesday (יום ג׳) מגיע יום רביעי: Wednesday'
   },
@@ -311,7 +311,7 @@ const DAYS_TIMELINE_DRILLS = [
     questionHe: 'היום יום חמישי (Thursday). איזה יום יהיה מחר (Tomorrow will be)?',
     sentenceEn: 'Today is Thursday. Tomorrow will be ___.',
     targetAnswer: 'Friday',
-    choices: ['Friday', 'Tuesday', 'Sunday'],
+    choices: ['Friday', 'Tuesday', 'Sunday', 'Wednesday'],
     speakEn: 'Today is Thursday.',
     hint: 'אחרי יום חמישי (Thursday) מגיע יום שישי: Friday'
   },
@@ -321,7 +321,7 @@ const DAYS_TIMELINE_DRILLS = [
     questionHe: 'היום יום רביעי (Wednesday). איזה יום היה אתמול (Yesterday was)?',
     sentenceEn: 'Today is Wednesday. Yesterday was ___.',
     targetAnswer: 'Tuesday',
-    choices: ['Tuesday', 'Thursday', 'Saturday'],
+    choices: ['Tuesday', 'Thursday', 'Saturday', 'Monday'],
     speakEn: 'Today is Wednesday.',
     hint: 'לפני יום רביעי (Wednesday) היה יום שלישי: Tuesday'
   },
@@ -331,7 +331,7 @@ const DAYS_TIMELINE_DRILLS = [
     questionHe: 'היום יום שישי (Friday). איזה יום יהיה מחר (Tomorrow will be)?',
     sentenceEn: 'Today is Friday. Tomorrow will be ___.',
     targetAnswer: 'Saturday',
-    choices: ['Saturday', 'Thursday', 'Monday'],
+    choices: ['Saturday', 'Thursday', 'Monday', 'Tuesday'],
     speakEn: 'Tomorrow is Friday.',
     hint: 'אחרי יום שישי (Friday) מגיע יום שבת: Saturday'
   },
@@ -341,7 +341,7 @@ const DAYS_TIMELINE_DRILLS = [
     questionHe: 'אתמול היה יום ראשון (Sunday), ומחר יהיה יום שלישי (Tuesday). איזה יום היום (Today is)?',
     sentenceEn: 'Yesterday was Sunday. Today is ___.',
     targetAnswer: 'Monday',
-    choices: ['Monday', 'Wednesday', 'Friday'],
+    choices: ['Monday', 'Wednesday', 'Friday', 'Thursday'],
     speakEn: 'Today is Monday.',
     hint: 'בין Sunday ל-Tuesday נמצא יום שני: Monday'
   },
@@ -351,7 +351,7 @@ const DAYS_TIMELINE_DRILLS = [
     questionHe: 'כל יום בשבוע באנגלית חייב להתחיל ב-Capital Letter (אות גדולה). איזו מילה כתובה נכון?',
     sentenceEn: 'Today is ___ (יום רביעי).',
     targetAnswer: 'Wednesday',
-    choices: ['Wednesday', 'wednesday', 'wEDNESDAY'],
+    choices: ['Wednesday', 'wednesday', 'wEDNESDAY', 'WEDNesday'],
     speakEn: 'Today is Wednesday.',
     hint: 'רק האות הראשונה היא Capital Letter גדולה: W'
   },
@@ -361,7 +361,7 @@ const DAYS_TIMELINE_DRILLS = [
     questionHe: 'שימו לב להבדל בין יום שלישי ליום חמישי! איך כותבים "יום חמישי" (עם הצליל th 👅 ו-Capital Letter)?',
     sentenceEn: 'Today is ___ (יום חמישי).',
     targetAnswer: 'Thursday',
-    choices: ['Thursday', 'Tuesday', 'thursday'],
+    choices: ['Thursday', 'Tuesday', 'thursday', 'tuesday'],
     speakEn: 'Today is Thursday.',
     hint: 'יום חמישי מתחיל ב-Th גדולה: Thursday'
   },
@@ -371,7 +371,7 @@ const DAYS_TIMELINE_DRILLS = [
     questionHe: 'איזו מילה מתאימה למשפט על הזמן שכבר עבר (אתמול היה יום שבת)?',
     sentenceEn: '___ was Saturday.',
     targetAnswer: 'Yesterday',
-    choices: ['Yesterday', 'Tomorrow', 'Today'],
+    choices: ['Yesterday', 'Tomorrow', 'Today', 'Morning'],
     speakEn: 'Yesterday was Saturday.',
     hint: 'אתמול = Yesterday (והולך עם was)'
   }

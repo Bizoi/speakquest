@@ -393,10 +393,10 @@ h1, h2, h3, .question-prompt {
   background: var(--primary-soft);
 }
 
-/* Choices Grid */
+/* Choices Grid (4 Options — 2x2 on desktop/tablet, 1 column on narrow mobile <520px) */
 .choices-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   margin: 18px 0;
 }
@@ -500,6 +500,113 @@ h1, h2, h3, .question-prompt {
   margin-top: 16px;
 }
 
+.speak-cadence-badge {
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  border: 1px solid #bfdbfe;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.reading-verify-box {
+  margin-top: 16px;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border-color);
+  background: var(--bg-card);
+  text-align: center;
+}
+
+.reading-verify-box.verify-pass {
+  border-color: var(--success);
+  background: #f0fdf4;
+}
+
+.reading-verify-box.verify-fail {
+  border-color: var(--danger);
+  background: #fef2f2;
+}
+
+.reading-verify-box.verify-manual {
+  border-color: var(--warning);
+  background: #fffbeb;
+}
+
+.reading-words-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0;
+  direction: ltr;
+}
+
+.read-word-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  background: var(--success-soft);
+  color: #14532d;
+  border: 2px solid var(--success);
+}
+
+.read-word-miss {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  background: var(--danger-soft);
+  color: #7f1d1d;
+  border: 2px solid var(--danger);
+}
+
+.read-word-tap {
+  cursor: pointer;
+  transition: transform 0.12s ease, background-color 0.15s ease;
+}
+
+.read-word-tap:hover {
+  transform: translateY(-1px);
+}
+
+.reading-demo-bar {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  border: 1px dashed var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.reading-demo-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.reading-demo-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 /* 7-Day Train Bar & 3-Box Time Machine */
 .days-train {
   display: grid;
@@ -600,6 +707,12 @@ h1, h2, h3, .question-prompt {
     grid-template-columns: repeat(4, 1fr);
   }
   .time-machine-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .choices-grid {
     grid-template-columns: 1fr;
   }
 }

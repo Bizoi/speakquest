@@ -121,7 +121,7 @@
     return copy;
   }
 
-  function pickDistractors(targetWord, pool, count = 2) {
+  function pickDistractors(targetWord, pool, count = 3) {
     const candidates = pool.filter(w => w.id !== targetWord.id);
     const source = candidates.length >= count ? candidates : ALL_WORDS.filter(w => w.id !== targetWord.id);
     return shuffle(source).slice(0, count);
@@ -135,16 +135,129 @@
     return `${sentence} (___)`;
   }
 
-  // Build a 5-word Micro-Sprint with Triple Spaced Verification (Round A -> Round B -> Speaking Delay -> Spaced Round C)
+  function levenshteinDistance(a, b) {
+    const m = a.length;
+    const n = b.length;
+    const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+    for (let i = 0; i <= m; i++) dp[i][0] = i;
+    for (let j = 0; j <= n; j++) dp[0][j] = j;
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        dp[i][j] = Math.min(
+          dp[i - 1][j] + 1,
+          dp[i][j - 1] + 1,
+          dp[i - 1][j - 1] + cost
+        );
+      }
+    }
+    return dp[m][n];
+  }
+
+  const KID_PHONETIC_ALIASES = {
+    '11': 'eleven',
+    '12': 'twelve',
+    '13': 'thirteen',
+    '14': 'fourteen',
+    '15': 'fifteen',
+    '16': 'sixteen',
+    '17': 'seventeen',
+    '18': 'eighteen',
+    '19': 'nineteen',
+    '20': 'twenty',
+    'teef': 'teeth',
+    'tith': 'teeth',
+    'tooth': 'teeth',
+    'veggies': 'vegetables',
+    'vegetable': 'vegetables',
+    'frends': 'friends',
+    'friend': 'friends',
+    'sandwitch': 'sandwich',
+    'sandwiches': 'sandwich',
+    'toms': 'tomato',
+    'tomatos': 'tomato',
+    'tomatoes': 'tomato'
+  };
+
+  function normalizeReadingToken(rawToken) {
+    const clean = String(rawToken || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '');
+    return KID_PHONETIC_ALIASES[clean] || clean;
+  }
+
+  function evaluateReadingAloud(targetPhrase, transcriptRaw) {
+    const rawDisplayWords = String(targetPhrase || '')
+      .trim()
+      .split(/\s+/)
+      .map(w => w.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9']+$/g, ''))
+      .filter(Boolean);
+
+    const targetWords = rawDisplayWords.map(w => ({
+      display: w,
+      norm: normalizeReadingToken(w)
+    })).filter(w => w.norm.length > 0);
+
+    const rawSpokenTokens = String(transcriptRaw || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9\s']/g, ' ')
+      .split(/\s+/)
+      .map(t => normalizeReadingToken(t))
+      .filter(Boolean);
+
+    const spokenSet = new Set(rawSpokenTokens);
+    // Support contractions & multi-word kid aliases ("im" <-> "i am", "dont" <-> "do not")
+    if (spokenSet.has('i') && spokenSet.has('am')) spokenSet.add('im');
+    if (spokenSet.has('im')) {
+      spokenSet.add('i');
+      spokenSet.add('am');
+    }
+    if (spokenSet.has('do') && spokenSet.has('not')) spokenSet.add('dont');
+    if (spokenSet.has('dont')) {
+      spokenSet.add('do');
+      spokenSet.add('not');
+    }
+
+    const spokenList = Array.from(spokenSet);
+
+    const words = targetWords.map(tw => {
+      let ok = false;
+      if (spokenSet.has(tw.norm)) {
+        ok = true;
+      } else if (tw.norm === 'im' && spokenSet.has('i') && spokenSet.has('am')) {
+        ok = true;
+      } else if (tw.norm === 'dont' && spokenSet.has('do') && spokenSet.has('not')) {
+        ok = true;
+      } else if (tw.norm.length >= 4) {
+        const maxDist = tw.norm.length >= 7 ? 2 : 1;
+        ok = spokenList.some(sp => sp.length >= 3 && levenshteinDistance(tw.norm, sp) <= maxDist);
+      }
+      return { word: tw.display, ok };
+    });
+
+    const matchedCount = words.filter(w => w.ok).length;
+    const accuracy = words.length > 0 ? Math.round((matchedCount / words.length) * 100) : 0;
+    const passed = accuracy >= 70;
+
+    return {
+      words,
+      matchedCount,
+      totalCount: words.length,
+      accuracy,
+      passed
+    };
+  }
+
+  // Build a 5-word Micro-Sprint with Triple Spaced Verification + Reading Aloud Every 4 Questions
   function startVocabSprint(wordsList, title, isReviewSprint = false) {
     const batch = wordsList.slice(0, 5);
     const drawerPool = ALL_WORDS.filter(w => w.drawerId === (batch[0]?.drawerId || 'sandwich'));
 
-    const cards = [];
+    const mcCards = [];
     // Step 1 (Round A — 1/3): Recognition (English + Audio -> Hebrew)
     batch.forEach(word => {
-      const distractors = pickDistractors(word, drawerPool, 2);
-      cards.push({
+      const distractors = pickDistractors(word, drawerPool, 3);
+      mcCards.push({
         cardType: 'vocab-round-a',
         word,
         choices: shuffle([
@@ -161,8 +274,8 @@
 
     // Step 2 (Round B — 2/3): Context Verification inside a 3-4 word sentence (Shuffled order)
     shuffle(batch).forEach(word => {
-      const distractors = pickDistractors(word, drawerPool, 2);
-      cards.push({
+      const distractors = pickDistractors(word, drawerPool, 3);
+      mcCards.push({
         cardType: 'vocab-round-b',
         word,
         blankedSentence: blankWordInSentence(word.shortEn, word.en),
@@ -178,25 +291,10 @@
       });
     });
 
-    // Step 3 (Spacing Delay): 2 Mandatory Speaking & Self-Listening Cards placed between Round B and Round C
-    const speakWords = batch.slice(0, Math.min(2, batch.length));
-    speakWords.forEach(word => {
-      cards.push({
-        cardType: 'vocab-speak',
-        word,
-        phraseToSpeak: word.shortEn,
-        phraseHe: word.shortHe,
-        recordedUrl: null,
-        hasListenedToSelf: false,
-        sttTranscript: '',
-        answered: false
-      });
-    });
-
-    // Step 4 (Round C — 3/3 Spaced Retrieval): Hebrew + Emoji -> Retrieve English word from memory (Shuffled order)
+    // Step 3 (Round C — 3/3 Spaced Retrieval): Hebrew + Emoji -> Retrieve English word from memory (Shuffled order)
     shuffle(batch).forEach(word => {
-      const distractors = pickDistractors(word, drawerPool, 2);
-      cards.push({
+      const distractors = pickDistractors(word, drawerPool, 3);
+      mcCards.push({
         cardType: 'vocab-round-c',
         word,
         choices: shuffle([
@@ -209,6 +307,39 @@
         isRetry: false,
         retryInjected: false
       });
+    });
+
+    // Interleave a vocab-speak Reading Aloud & Verification card after every 4 MC questions (#4, #8, #12, and at the end #15)
+    const cards = [];
+    let speakWordIdx = 0;
+    mcCards.forEach((mcCard, idx) => {
+      const qNum = idx + 1;
+      const posInCycle = ((qNum - 1) % 4) + 1;
+      const isLastMc = qNum === mcCards.length;
+      const remainingInCycle = isLastMc && (qNum % 4 !== 0)
+        ? 0
+        : (4 - posInCycle);
+      mcCard.mcQuestionNum = qNum;
+      mcCard.posInCycle = posInCycle;
+      mcCard.untilNextSpeak = remainingInCycle;
+      cards.push(mcCard);
+
+      if (qNum % 4 === 0 || isLastMc) {
+        const speakWord = batch[speakWordIdx % batch.length];
+        speakWordIdx += 1;
+        cards.push({
+          cardType: 'vocab-speak',
+          word: speakWord,
+          speakStationNum: speakWordIdx,
+          afterQuestionNum: qNum,
+          phraseToSpeak: speakWord.shortEn,
+          phraseHe: speakWord.shortHe,
+          recordedUrl: null,
+          hasListenedToSelf: false,
+          sttTranscript: '',
+          answered: false
+        });
+      }
     });
 
     activeSession = {
@@ -229,7 +360,7 @@
     sourceCard.retryInjected = true;
     const word = sourceCard.word;
     const pool = session.drawerPool || ALL_WORDS;
-    const distractors = pickDistractors(word, pool, 2);
+    const distractors = pickDistractors(word, pool, 3);
     session.cards.push({
       cardType: 'vocab-round-c',
       word,
@@ -344,14 +475,14 @@
     container.innerHTML = `
       ${reviewBannerHtml}
       <div class="practice-card">
-        <h2 style="font-size:1.2rem; margin-bottom:6px;">איך עובד אימון הזיכרון שלנו? (אימות משולש ● ● ● 3/3 נגד ניחוש מקרי!)</h2>
+        <h2 style="font-size:1.2rem; margin-bottom:6px;">איך עובד אימון הזיכרון שלנו? (אימות משולש ● ● ● 3/3 + 4 אפשרויות + הקראה כל 4 שאלות!)</h2>
         <p style="color:var(--text-muted); font-size:0.93rem;">
-          בכל ספרינט מתרגלים רק <strong>5 מילים קצרות</strong> עם <strong>אימות משולש ומרווח (3/3)</strong>:
+          בכל ספרינט מתרגלים רק <strong>5 מילים קצרות</strong> עם <strong>4 אפשרויות בחירה</strong> בכל שאלה ו<strong>אימות משולש ומרווח (3/3)</strong>:
           <strong>(1)</strong> זיהוי משמעות המילה ←
           <strong>(2)</strong> שיבוץ במשפט קצר (3–4 מילים) ←
-          <strong>(3)</strong> הקלטה ושמיעה עצמית ←
-          <strong>(4)</strong> אימות שלישי מרווח בהמשך (שליפה מעברית לאנגלית מהזיכרון)!
-          מילה מסומנת כ<strong>"נלמד באמת ✅ (3/3)"</strong> רק כשמצליחים בכל 3 ההופעות בלי לנחש ובלי רמז.
+          <strong>(3)</strong> אימות שלישי מרווח בהמשך (שליפה מעברית לאנגלית מהזיכרון),
+          כש<strong>כל 4 שאלות מופיעה תחנת הקראה של הילד ובקרה מילה-מילה שמקריא נכון</strong>!
+          מילה מסומנת כ<strong>"נלמד באמת ✅ (3/3)"</strong> רק כשמצליחים בכל 3 ההופעות ובהקראה בלי לנחש ובלי רמז.
         </p>
       </div>
       <div class="drawers-grid">${drawersHtml}</div>
@@ -459,6 +590,15 @@
       const isRoundB = card.cardType === 'vocab-round-b';
       const isRoundC = card.cardType === 'vocab-round-c';
 
+      let untilSpeak = 0;
+      for (let i = s.currentIndex + 1; i < s.cards.length; i++) {
+        if (s.cards[i].cardType === 'vocab-speak') {
+          break;
+        }
+        untilSpeak += 1;
+      }
+      const nextIsSpeak = s.cards[s.currentIndex + 1]?.cardType === 'vocab-speak';
+
       const roundBadge = card.isRetry
         ? '🔁 הופעה חוזרת בסוף הספרינט (חיזוק מילה שטעינו/ביקשנו רמז!)'
         : isRoundA
@@ -520,6 +660,7 @@
               <div style="font-weight:800; font-size:0.95rem;">${s.title}</div>
               <div style="font-size:0.84rem; color:var(--text-muted);">${roundBadge}</div>
             </div>
+            <span class="speak-cadence-badge">🎤 הקראה ובדיקת דיבור: כל 4 שאלות (עוד ${untilSpeak} שאלות להקראה)</span>
             <div class="sprint-step-pills">${dotsHtml}</div>
             <span class="mastery-badge ${masteryInfo.isMastered ? 'mastered' : ''}">${masteryInfo.text}</span>
             <button type="button" class="btn btn-secondary" id="btn-exit-sprint" style="padding:6px 12px; font-size:0.82rem;">יציאה למגירות</button>
@@ -606,7 +747,9 @@
                     ${word.en} = ${word.he} · "${word.shortEn}" (${word.shortHe})
                   </div>
                 </div>
-                <button type="button" class="btn btn-success" id="btn-next-card">המשך ⬅️</button>
+                <button type="button" class="btn btn-success" id="btn-next-card">
+                  ${nextIsSpeak ? '🎤 המשך להקראה ובדיקת דיבור ⬅️' : 'המשך ⬅️'}
+                </button>
               </div>
             `;
             document.getElementById('btn-next-card').addEventListener('click', () => {
@@ -640,11 +783,11 @@
       return;
     }
 
-    // Spacing Delay between Round B and Round C: Mandatory Speaking & Self-Listening Station
+    // Interleaved every 4 questions: Mandatory Reading Aloud & Pronunciation Control Station
     if (card.cardType === 'vocab-speak') {
       renderSpeakingCard(container, {
         topTitle: s.title,
-        subTitle: 'תחנת דיבור ושמיעה עצמית (חובה — מרווח זיכרון לפני האימות השלישי!): 🎤',
+        subTitle: `🎤 הקראה של הילד ובקרה שמקריא נכון (כל 4 שאלות — תחנת הקראה ${card.speakStationNum || 1})`,
         dotsHtml,
         emoji: word.emoji,
         phraseEn: card.phraseToSpeak,
@@ -656,7 +799,10 @@
         },
         onStruggle: () => {
           s.flawedWordIds.add(word.id);
-          addToReviewQueue('vocab', word.id, `${word.en} (${word.he})`, 'חיזוק הגייה ודיבור');
+          const m = getWordMastery(word.id);
+          m.mastered = false;
+          addToReviewQueue('vocab', word.id, `${word.en} (${word.he})`, 'חיזוק הגייה והקראה בקול');
+          injectDelayedRetryCard(s, card);
           s.currentIndex += 1;
           render();
         },
@@ -668,7 +814,7 @@
     }
   }
 
-  // Reusable Speaking & Automatic Self-Playback Station
+  // Reusable Speaking, Self-Playback & Word-by-Word Reading Verification Station
   function renderSpeakingCard(container, opts) {
     container.innerHTML = `
       <div class="practice-card">
@@ -677,13 +823,14 @@
             <div style="font-weight:800; font-size:0.95rem;">${opts.topTitle}</div>
             <div style="font-size:0.84rem; color:var(--primary); font-weight:700;">${opts.subTitle}</div>
           </div>
+          <span class="speak-cadence-badge">🎤 כל 4 שאלות — הקראה ובקרת קריאה</span>
           <div class="sprint-step-pills">${opts.dotsHtml || ''}</div>
           <button type="button" class="btn btn-secondary" id="btn-exit-speak" style="padding:6px 12px; font-size:0.82rem;">חזרה</button>
         </div>
 
         <div class="target-showcase">
           <div class="target-emoji">${opts.emoji || '🎤'}</div>
-          <div style="font-size:0.95rem; color:var(--text-muted); margin-bottom:4px;">הקשיבו ואמרו בקול את המשפט הקצר:</div>
+          <div style="font-size:0.95rem; color:var(--text-muted); margin-bottom:4px;">הקריאו בקול ובברור את המשפט באנגלית:</div>
           <div class="ltr-sentence">${highlightPhonics(opts.phraseEn)}</div>
           <div style="font-size:1.05rem; font-weight:700; margin-top:6px;">${opts.phraseHe}</div>
           ${opts.phonicsLegend || ''}
@@ -693,33 +840,33 @@
         </div>
 
         <div class="speech-box">
-          <h3 style="font-size:1.1rem; margin-bottom:8px;">🎤 עכשיו תורכם להקליט ולשמוע את עצמכם!</h3>
+          <h3 style="font-size:1.1rem; margin-bottom:8px;">🎤 הקליטו את עצמכם מקריאים — המערכת תבדוק מילה-מילה!</h3>
           <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:14px;">
-            ברגע שתסיימו להקליט, האפליקציה <strong>תשמיע לכם אוטומטית את הקול שלכם</strong> ומיד אחריו את ההגייה באנגלית כדי שתשמעו את עצמכם!
+            בסיום ההקלטה תשמעו <strong>אוטומטית את הקול שלכם</strong>, ומנגנון הבקרה יסמן בירוק/אדום כל מילה שהקראתם ויוודא שקראתם נכון לפני שממשיכים!
           </p>
           <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
             <button type="button" class="btn btn-primary" id="btn-start-record">
               🎤 הקליטו את עצמכם אומרים: "${opts.phraseEn}"
             </button>
             <button type="button" class="btn btn-warning" id="btn-stop-record" style="display:none;">
-              ⏹️ סיימתי לדבר — השמעו לי את עצמי!
+              ⏹️ סיימתי להקריא — בדקו אותי והשמיעו לי את עצמי!
             </button>
           </div>
           <div class="speech-status" id="speech-status-msg"></div>
           <div id="self-playback-controls" style="margin-top:12px;"></div>
         </div>
 
-        <div id="self-eval-box" style="display:none;">
-          <div class="feedback-banner success" style="flex-direction:column; align-items:stretch; text-align:center;">
-            <div>🎧 שמעתם את ההקלטה של עצמכם ואת ההגייה באנגלית. איך יצא לכם?</div>
-            <div class="self-check-actions">
-              <button type="button" class="btn btn-success" id="btn-speak-good">
-                ✅ שמעתי את עצמי — הגיתי נכון! המשך ⬅️
-              </button>
-              <button type="button" class="btn btn-warning" id="btn-speak-retry">
-                😅 התבלבלתי בהגייה — נחזיר לתרגול בחיזוק זיכרון 🔄
-              </button>
-            </div>
+        <div id="self-eval-box" style="display:none;"></div>
+
+        <div class="reading-demo-bar">
+          <div class="reading-demo-title">🧪 בדיקת מנגנון הבקרה (ללא מיקרופון):</div>
+          <div class="reading-demo-actions">
+            <button type="button" class="btn btn-secondary" id="btn-demo-read-pass" style="font-size:0.84rem; padding:7px 12px;">
+              ✅ הדגם הקראה תקינה של הילד
+            </button>
+            <button type="button" class="btn btn-secondary" id="btn-demo-read-fail" style="font-size:0.84rem; padding:7px 12px;">
+              ❌ הדגם טעות בהקראה של הילד
+            </button>
           </div>
         </div>
       </div>
@@ -737,18 +884,162 @@
     let recordedBlobUrl = null;
     let autoStopTimer = null;
 
+    function renderVerificationUI(transcriptText) {
+      const cleanTranscript = String(transcriptText || '').trim();
+      const hasTranscript = cleanTranscript.length > 0;
+      const evalRes = evaluateReadingAloud(opts.phraseEn, cleanTranscript);
+
+      evalBox.style.display = 'block';
+
+      // Case A: STT transcript captured and passed (accuracy >= 70%)
+      if (hasTranscript && evalRes.passed) {
+        const pillsHtml = evalRes.words.map(w => `
+          <span class="${w.ok ? 'read-word-ok' : 'read-word-miss'}">
+            ${w.word} ${w.ok ? '✓' : '✗ חסר/שגוי'}
+          </span>
+        `).join('');
+
+        evalBox.innerHTML = `
+          <div class="reading-verify-box verify-pass">
+            <div style="font-size:1.12rem; font-weight:800; color:#14532d; margin-bottom:6px;">
+              ✅ בקרת הקראה אוטומטית: מצוין! (${evalRes.accuracy}% דיוק)
+            </div>
+            <div style="font-size:0.95rem; font-weight:700; color:var(--text-main);">
+              🎧 המיקרופון זיהה: <span style="direction:ltr; display:inline-block;">"${cleanTranscript}"</span>
+            </div>
+            <div class="reading-words-row">${pillsHtml}</div>
+            <div class="self-check-actions">
+              <button type="button" class="btn btn-success" id="btn-speak-good">
+                ✅ מעולה! המשך לשאלה הבאה ⬅️
+              </button>
+            </div>
+          </div>
+        `;
+
+        const passBtn = document.getElementById('btn-speak-good');
+        if (passBtn) passBtn.addEventListener('click', opts.onPass);
+        return;
+      }
+
+      // Case B: STT transcript captured and failed (accuracy < 70%)
+      if (hasTranscript && !evalRes.passed) {
+        const pillsHtml = evalRes.words.map(w => `
+          <span class="${w.ok ? 'read-word-ok' : 'read-word-miss'}">
+            ${w.word} ${w.ok ? '✓' : '✗ חסר/שגוי'}
+          </span>
+        `).join('');
+
+        evalBox.innerHTML = `
+          <div class="reading-verify-box verify-fail">
+            <div style="font-size:1.12rem; font-weight:800; color:#7f1d1d; margin-bottom:6px;">
+              ❌ בקרת הקראה: לא זוהתה קריאה מדויקת (${evalRes.accuracy}% דיוק)
+            </div>
+            <div style="font-size:0.94rem; font-weight:700; color:var(--text-main); margin-bottom:4px;">
+              🎧 המיקרופון שמע: <span style="direction:ltr; display:inline-block;">"${cleanTranscript || 'לא זוהו מילים ברורות'}"</span>
+              &nbsp;מול&nbsp;
+              🎯 צריך להקריא: <span style="direction:ltr; display:inline-block;">"${opts.phraseEn}"</span>
+            </div>
+            <div class="reading-words-row">${pillsHtml}</div>
+            <div style="font-size:0.88rem; color:#7f1d1d; font-weight:700; margin-bottom:10px;">
+              🔊 הקשיבו שוב להגייה האיטית באנגלית ונסו להקריא שוב את המילים המסומנות באדום:
+            </div>
+            <div class="self-check-actions">
+              <button type="button" class="btn btn-primary" id="btn-speak-rerecord">
+                🎤 נסו להקריא שוב עכשיו
+              </button>
+              <button type="button" class="btn btn-warning" id="btn-speak-retry">
+                🔄 הוסף לחיזוק זיכרון והמשך
+              </button>
+            </div>
+          </div>
+        `;
+
+        const rerecordBtn = document.getElementById('btn-speak-rerecord');
+        if (rerecordBtn) {
+          rerecordBtn.addEventListener('click', () => {
+            evalBox.style.display = 'none';
+            startBtn.click();
+          });
+        }
+        const struggleBtn = document.getElementById('btn-speak-retry');
+        if (struggleBtn) struggleBtn.addEventListener('click', opts.onStruggle);
+        return;
+      }
+
+      // Case C: Browser didn't return STT transcript (e.g., Safari/offline mic where only MediaRecorder ran)
+      const manualWords = evalRes.words.map(w => ({ word: w.word, ok: false }));
+      function renderManualWordTapStep() {
+        const checkedCount = manualWords.filter(w => w.ok).length;
+        const manualAccuracy = manualWords.length > 0 ? Math.round((checkedCount / manualWords.length) * 100) : 100;
+        const manualPassed = manualAccuracy >= 70;
+
+        const tapPillsHtml = manualWords.map((w, idx) => `
+          <button type="button" class="${w.ok ? 'read-word-ok' : 'read-word-miss'} read-word-tap" data-manual-word="${idx}">
+            ${w.word} ${w.ok ? '✓ קראתי נכון' : '👆 לחצו אם ביטאתם נכון'}
+          </button>
+        `).join('');
+
+        evalBox.innerHTML = `
+          <div class="reading-verify-box verify-manual">
+            <div style="font-size:1.05rem; font-weight:800; color:#92400e; margin-bottom:6px;">
+              🎧 בקרת הקראה עצמית מילה-מילה (${manualAccuracy}% אומתו)
+            </div>
+            <div style="font-size:0.9rem; color:var(--text-main); margin-bottom:8px;">
+              הדפדפן השמיע את ההקלטה שלכם מול הגיית הדוגמה. <strong>לחצו על כל מילה</strong> ששמעתם את עצמכם הוגים נכון וברור:
+            </div>
+            <div class="reading-words-row">${tapPillsHtml}</div>
+            <div class="self-check-actions">
+              ${manualPassed ? `
+                <button type="button" class="btn btn-success" id="btn-speak-good">
+                  ✅ מעולה! המשך לשאלה הבאה ⬅️
+                </button>
+              ` : ''}
+              <button type="button" class="btn btn-primary" id="btn-speak-rerecord">
+                🎤 נסו להקריא שוב עכשיו
+              </button>
+              <button type="button" class="btn btn-warning" id="btn-speak-retry">
+                🔄 הוסף לחיזוק זיכרון והמשך
+              </button>
+            </div>
+          </div>
+        `;
+
+        evalBox.querySelectorAll('[data-manual-word]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const i = Number(btn.getAttribute('data-manual-word'));
+            manualWords[i].ok = !manualWords[i].ok;
+            renderManualWordTapStep();
+          });
+        });
+
+        const passBtn = document.getElementById('btn-speak-good');
+        if (passBtn) passBtn.addEventListener('click', opts.onPass);
+        const rerecordBtn = document.getElementById('btn-speak-rerecord');
+        if (rerecordBtn) {
+          rerecordBtn.addEventListener('click', () => {
+            evalBox.style.display = 'none';
+            startBtn.click();
+          });
+        }
+        const struggleBtn = document.getElementById('btn-speak-retry');
+        if (struggleBtn) struggleBtn.addEventListener('click', opts.onStruggle);
+      }
+
+      renderManualWordTapStep();
+    }
+
     function finishAndPlaySelf(transcriptText) {
       startBtn.style.display = 'inline-flex';
       stopBtn.style.display = 'none';
       if (autoStopTimer) clearTimeout(autoStopTimer);
 
+      renderVerificationUI(transcriptText);
+
       statusMsg.textContent = '🔊 משמיע עכשיו את ההקלטה שלכם... הקשיבו לעצמכם!';
 
       const afterSelfPlayback = () => {
         statusMsg.textContent = `🔊 ועכשיו הגיית הדוגמה באנגלית: "${opts.phraseEn}"${transcriptText ? ` (זוהה בדיבור: "${transcriptText}")` : ''}`;
-        speakEnglish(opts.phraseEn, () => {
-          evalBox.style.display = 'block';
-        });
+        speakEnglish(opts.phraseEn);
       };
 
       if (recordedBlobUrl) {
@@ -772,6 +1063,20 @@
       } else {
         afterSelfPlayback();
       }
+    }
+
+    const demoPassBtn = document.getElementById('btn-demo-read-pass');
+    if (demoPassBtn) {
+      demoPassBtn.addEventListener('click', () => {
+        finishAndPlaySelf(opts.phraseEn);
+      });
+    }
+
+    const demoFailBtn = document.getElementById('btn-demo-read-fail');
+    if (demoFailBtn) {
+      demoFailBtn.addEventListener('click', () => {
+        finishAndPlaySelf('wrong word banana');
+      });
     }
 
     startBtn.addEventListener('click', async () => {
@@ -842,9 +1147,6 @@
         finishAndPlaySelf('');
       }
     });
-
-    document.getElementById('btn-speak-good').addEventListener('click', opts.onPass);
-    document.getElementById('btn-speak-retry').addEventListener('click', opts.onStruggle);
   }
 
   function renderVocabSprintSummary(container) {
@@ -900,6 +1202,8 @@
       activeSession = {
         sessionType: 'chunks',
         index: 0,
+        questionsSinceSpeak: 0,
+        lastCountedIndex: -1,
         speakingStep: false
       };
     }
@@ -910,27 +1214,35 @@
     if (activeSession.speakingStep) {
       renderSpeakingCard(container, {
         topTitle: `1B. 🥪 תבניות ושיחה (${idx + 1} / ${CHUNKS_DRILLS.length})`,
-        subTitle: `🎤 הקלטה ושמיעה עצמית של התבנית: ${drill.chunkTitle}`,
+        subTitle: `🎤 הקראה של הילד ובקרה שמקריא נכון (כל 4 שאלות): ${drill.chunkTitle}`,
         emoji: '🗣️',
         phraseEn: drill.fullSpeakEn,
         phraseHe: drill.promptHe,
         onPass: () => {
           activeSession.speakingStep = false;
+          activeSession.questionsSinceSpeak = 0;
           activeSession.index = (activeSession.index + 1) % CHUNKS_DRILLS.length;
           render();
         },
         onStruggle: () => {
           addToReviewQueue('chunk', drill.id, drill.chunkTitle, 'חיזוק הגייה של תבנית שיחה');
           activeSession.speakingStep = false;
+          activeSession.questionsSinceSpeak = 0;
           activeSession.index = (activeSession.index + 1) % CHUNKS_DRILLS.length;
           render();
         },
         onExit: () => {
           activeSession.speakingStep = false;
+          activeSession.questionsSinceSpeak = 0;
           render();
         }
       });
       return;
+    }
+
+    if (activeSession.lastCountedIndex !== activeSession.index) {
+      activeSession.questionsSinceSpeak = (activeSession.questionsSinceSpeak || 0) + 1;
+      activeSession.lastCountedIndex = activeSession.index;
     }
 
     const choices = shuffle(drill.choices);
@@ -949,6 +1261,7 @@
               Chunk: ${drill.chunkTitle}
             </div>
           </div>
+          <span class="speak-cadence-badge">🎤 הקראה בקול: כל 4 שאלות (שאלה ${activeSession.questionsSinceSpeak}/4)</span>
           <span class="mastery-badge">שאלה ${idx + 1} מתוך ${CHUNKS_DRILLS.length}</span>
         </div>
 
@@ -964,7 +1277,7 @@
 
         <div class="support-bar">
           <button type="button" class="btn btn-warning" id="btn-chunk-hint">💡 רמז לתבנית</button>
-          <span style="font-size:0.84rem; color:var(--text-muted);">בכל שאלה שלישית עוברים גם להקלטה ושמיעה עצמית! 🎤</span>
+          <span style="font-size:0.84rem; color:var(--text-muted);">כל 4 שאלות — הקראה של הילד ובקרה שמקריא נכון! 🎤</span>
         </div>
         <div id="chunk-hint-box"></div>
         <div id="chunk-feedback-box"></div>
@@ -991,18 +1304,19 @@
           }
           removeFromReviewQueue('chunk', drill.id);
 
-          const shouldSpeakNext = (idx % 3 === 0);
+          const shouldSpeakNext = activeSession.questionsSinceSpeak >= 4;
           fb.innerHTML = `
             <div class="feedback-banner success">
               <div>✅ מדויק! <strong>${drill.fullSpeakEn}</strong></div>
               <button type="button" class="btn btn-success" id="btn-chunk-next">
-                ${shouldSpeakNext ? '🎤 המשך להקלטה ושמיעה עצמית של המשפט' : 'המשך לשאלה הבאה ⬅️'}
+                ${shouldSpeakNext ? '🎤 המשך להקראה ובדיקת דיבור (כל 4 שאלות)' : 'המשך לשאלה הבאה ⬅️'}
               </button>
             </div>
           `;
           document.getElementById('btn-chunk-next').addEventListener('click', () => {
             if (shouldSpeakNext) {
               activeSession.speakingStep = true;
+              activeSession.questionsSinceSpeak = 0;
             } else {
               activeSession.index = (activeSession.index + 1) % CHUNKS_DRILLS.length;
             }
@@ -1028,6 +1342,8 @@
       activeSession = {
         sessionType: 'days',
         index: 0,
+        questionsSinceSpeak: 0,
+        lastCountedIndex: -1,
         speakingStep: false
       };
     }
@@ -1041,27 +1357,35 @@
     if (activeSession.speakingStep) {
       renderSpeakingCard(container, {
         topTitle: `1C. 📅 ימות השבוע וזמן (${idx + 1} / ${DAYS_TIMELINE_DRILLS.length})`,
-        subTitle: '🎤 הקלטה ושמיעה עצמית של משפט הזמן!',
+        subTitle: '🎤 הקראה של הילד ובקרה שמקריא נכון (כל 4 שאלות)!',
         emoji: '📅',
         phraseEn: drill.speakEn,
         phraseHe: drill.questionHe,
         onPass: () => {
           activeSession.speakingStep = false;
+          activeSession.questionsSinceSpeak = 0;
           activeSession.index = (activeSession.index + 1) % DAYS_TIMELINE_DRILLS.length;
           render();
         },
         onStruggle: () => {
           addToReviewQueue('day', drill.id, drill.speakEn, 'חיזוק הגייה בימות השבוע');
           activeSession.speakingStep = false;
+          activeSession.questionsSinceSpeak = 0;
           activeSession.index = (activeSession.index + 1) % DAYS_TIMELINE_DRILLS.length;
           render();
         },
         onExit: () => {
           activeSession.speakingStep = false;
+          activeSession.questionsSinceSpeak = 0;
           render();
         }
       });
       return;
+    }
+
+    if (activeSession.lastCountedIndex !== activeSession.index) {
+      activeSession.questionsSinceSpeak = (activeSession.questionsSinceSpeak || 0) + 1;
+      activeSession.lastCountedIndex = activeSession.index;
     }
 
     const trainHtml = DAYS_ORDER.map((d, i) => {
@@ -1100,6 +1424,7 @@
             <div style="font-weight:800;">1C. 📅 רכבת ימות השבוע · Yesterday / Today / Tomorrow · Capital Letter</div>
             <div style="font-size:0.84rem; color:var(--text-muted);">שימו לב: כל יום בשבוע מתחיל באות גדולה מודגשת בזהב (Capital Letter)!</div>
           </div>
+          <span class="speak-cadence-badge">🎤 הקראה בקול: כל 4 שאלות (שאלה ${activeSession.questionsSinceSpeak}/4)</span>
           <span class="mastery-badge">חידה ${idx + 1} מתוך ${DAYS_TIMELINE_DRILLS.length}</span>
         </div>
 
@@ -1132,6 +1457,7 @@
 
         <div class="support-bar">
           <button type="button" class="btn btn-warning" id="btn-day-hint">💡 רמז מסרגל הימים</button>
+          <span style="font-size:0.84rem; color:var(--text-muted);">כל 4 שאלות — הקראה של הילד ובקרה שמקריא נכון! 🎤</span>
         </div>
         <div id="day-hint-box"></div>
         <div id="day-feedback-box"></div>
@@ -1153,19 +1479,20 @@
           container.querySelectorAll('[data-day-ans]').forEach(b => b.disabled = true);
           speakEnglish(drill.speakEn);
           removeFromReviewQueue('day', drill.id);
-          const shouldSpeak = (idx % 3 === 0);
+          const shouldSpeak = activeSession.questionsSinceSpeak >= 4;
 
           fb.innerHTML = `
             <div class="feedback-banner success">
               <div>✅ נהדר! <strong>${drill.speakEn}</strong></div>
               <button type="button" class="btn btn-success" id="btn-day-next">
-                ${shouldSpeak ? '🎤 המשך להקלטה ושמיעה עצמית' : 'המשך לחידה הבאה ⬅️'}
+                ${shouldSpeak ? '🎤 המשך להקראה ובדיקת דיבור (כל 4 שאלות)' : 'המשך לחידה הבאה ⬅️'}
               </button>
             </div>
           `;
           document.getElementById('btn-day-next').addEventListener('click', () => {
             if (shouldSpeak) {
               activeSession.speakingStep = true;
+              activeSession.questionsSinceSpeak = 0;
             } else {
               activeSession.index = (activeSession.index + 1) % DAYS_TIMELINE_DRILLS.length;
             }
@@ -1185,13 +1512,15 @@
     });
   }
 
-  // Priority 2: Phonics Lab (ch / sh / th)
+  // Priority 2: Phonics Lab (ch / sh / th + 4th distractor)
   function renderPhonicsMode(container) {
     const phonicsWords = ALL_WORDS.filter(w => w.phonics);
     if (!activeSession || activeSession.sessionType !== 'phonics') {
       activeSession = {
         sessionType: 'phonics',
         index: 0,
+        questionsSinceSpeak: 0,
+        lastCountedIndex: -1,
         speakingStep: false
       };
     }
@@ -1202,27 +1531,35 @@
     if (activeSession.speakingStep) {
       renderSpeakingCard(container, {
         topTitle: `2. 🔤 מעבדת הפונטיקה (${idx + 1} / ${phonicsWords.length})`,
-        subTitle: `🎤 הקלטה ושמיעה עצמית של הצליל ${word.phonics.toUpperCase()}`,
+        subTitle: `🎤 הקראה של הילד ובקרה שמקריא נכון (כל 4 שאלות — צליל ${word.phonics.toUpperCase()})`,
         emoji: word.emoji,
         phraseEn: word.shortEn,
         phraseHe: `${word.en} (${word.he}) — "${word.shortHe}"`,
         onPass: () => {
           activeSession.speakingStep = false;
+          activeSession.questionsSinceSpeak = 0;
           activeSession.index = (activeSession.index + 1) % phonicsWords.length;
           render();
         },
         onStruggle: () => {
           addToReviewQueue('phonics', word.id, `${word.en} (${word.phonics})`, 'חיזוק הגיית ch/sh/th');
           activeSession.speakingStep = false;
+          activeSession.questionsSinceSpeak = 0;
           activeSession.index = (activeSession.index + 1) % phonicsWords.length;
           render();
         },
         onExit: () => {
           activeSession.speakingStep = false;
+          activeSession.questionsSinceSpeak = 0;
           render();
         }
       });
       return;
+    }
+
+    if (activeSession.lastCountedIndex !== activeSession.index) {
+      activeSession.questionsSinceSpeak = (activeSession.questionsSinceSpeak || 0) + 1;
+      activeSession.lastCountedIndex = activeSession.index;
     }
 
     const maskedWord = word.en.replace(new RegExp(word.phonics, 'i'), '__');
@@ -1236,6 +1573,7 @@
               🟧 <strong>ch</strong> = צ׳ (cheese, lunch) · 🟦 <strong>sh</strong> = שׁ (fish, wash) · 🟪 <strong>th</strong> = לשון בין השיניים 👅 (teeth, Thursday)
             </div>
           </div>
+          <span class="speak-cadence-badge">🎤 הקראה בקול: כל 4 שאלות (שאלה ${activeSession.questionsSinceSpeak}/4)</span>
           <span class="mastery-badge">מילה ${idx + 1} מתוך ${phonicsWords.length}</span>
         </div>
 
@@ -1249,7 +1587,7 @@
           </div>
         </div>
 
-        <div class="choices-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="choices-grid">
           <button type="button" class="choice-btn" data-ph-choice="ch">
             <span class="ph-ch" style="font-size:1.35rem;">ch</span>
             <div style="font-size:0.82rem; margin-top:4px;">צליל צ׳</div>
@@ -1261,6 +1599,10 @@
           <button type="button" class="choice-btn" data-ph-choice="th">
             <span class="ph-th" style="font-size:1.35rem;">th</span>
             <div style="font-size:0.82rem; margin-top:4px;">לשון בין השיניים 👅</div>
+          </button>
+          <button type="button" class="choice-btn" data-ph-choice="st">
+            <span style="font-size:1.35rem; font-weight:900; color:var(--text-muted);">st / צליל אחר</span>
+            <div style="font-size:0.82rem; margin-top:4px;">צליל סְט / אחר</div>
           </button>
         </div>
 
@@ -1279,19 +1621,20 @@
           container.querySelectorAll('[data-ph-choice]').forEach(b => b.disabled = true);
           speakEnglish(word.en);
           removeFromReviewQueue('phonics', word.id);
-          const shouldSpeak = (idx % 2 === 0);
+          const shouldSpeak = activeSession.questionsSinceSpeak >= 4;
 
           fb.innerHTML = `
             <div class="feedback-banner success">
               <div>✅ מצוין! <strong>${highlightPhonics(word.en)}</strong> (${word.he}) — "${word.shortEn}"</div>
               <button type="button" class="btn btn-success" id="btn-ph-next">
-                ${shouldSpeak ? '🎤 עכשיו הקליטו ושמעו את עצמכם!' : 'למילה הבאה ⬅️'}
+                ${shouldSpeak ? '🎤 המשך להקראה ובדיקת דיבור (כל 4 שאלות)' : 'למילה הבאה ⬅️'}
               </button>
             </div>
           `;
           document.getElementById('btn-ph-next').addEventListener('click', () => {
             if (shouldSpeak) {
               activeSession.speakingStep = true;
+              activeSession.questionsSinceSpeak = 0;
             } else {
               activeSession.index = (activeSession.index + 1) % phonicsWords.length;
             }
