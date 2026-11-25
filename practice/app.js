@@ -261,8 +261,8 @@
         cardType: 'vocab-round-a',
         word,
         choices: shuffle([
-          { label: `${word.he} ${word.emoji}`, isCorrect: true, value: word.id },
-          ...distractors.map(d => ({ label: `${d.he} ${d.emoji}`, isCorrect: false, value: d.id }))
+          { label: word.he, isCorrect: true, value: word.id },
+          ...distractors.map(d => ({ label: d.he, isCorrect: false, value: d.id }))
         ]),
         flawed: false,
         hintLevel: 0,
@@ -611,7 +611,6 @@
         ? `
           <div class="target-showcase">
             <div>
-              <span class="target-emoji">${word.emoji}</span>
               <span class="ltr-en">${highlightPhonics(word.en)}</span>
             </div>
             ${phonicsLegend}
@@ -625,27 +624,19 @@
         ? `
           <div class="target-showcase">
             <div style="font-size:1.05rem; font-weight:800; margin-bottom:2px;">
-              <span class="target-emoji">${word.emoji}</span> "${word.shortHe}"
+              "${word.shortHe}"
             </div>
             <div class="ltr-sentence">${highlightPhonics(card.blankedSentence)}</div>
             ${phonicsLegend}
-            <div>
-              <button type="button" class="audio-btn" id="btn-play-target-audio">🔊 השמע את המשפט המלא</button>
-            </div>
           </div>
           <h2 class="question-prompt" style="text-align:center;">איזו מילה באנגלית משלימה נכון את המשפט הקצר?</h2>
         `
         : `
           <div class="target-showcase">
             <div>
-              <span class="target-emoji">${word.emoji}</span>
-              <span style="font-size:1.45rem; font-weight:900; vertical-align:middle; color:var(--text-main);">${word.he}</span>
+              <span style="font-size:1.45rem; font-weight:900; color:var(--text-main);">${word.he}</span>
             </div>
-            <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">🧠 אימות שלישי מרווח מהזיכרון (בלי לראות את המילה כתובה למעלה!)</div>
-            ${phonicsLegend}
-            <div>
-              <button type="button" class="audio-btn" id="btn-play-target-audio">🔊 רמז שמע: הקשיבו למילה באנגלית</button>
-            </div>
+            <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">🧠 אימות שלישי מרווח מהזיכרון — בחרו את המילה המתאימה באנגלית</div>
           </div>
           <h2 class="question-prompt" style="text-align:center;">איך אומרים באנגלית: <strong>${word.he}</strong>?</h2>
         `;
@@ -693,9 +684,12 @@
         render();
       });
 
-      document.getElementById('btn-play-target-audio').addEventListener('click', () => {
-        speakEnglish(isRoundB ? word.shortEn : word.en);
-      });
+      const playTargetAudioBtn = document.getElementById('btn-play-target-audio');
+      if (playTargetAudioBtn) {
+        playTargetAudioBtn.addEventListener('click', () => {
+          speakEnglish(isRoundB ? word.shortEn : word.en);
+        });
+      }
 
       document.getElementById('btn-show-hint').addEventListener('click', () => {
         card.flawed = true;
@@ -703,11 +697,14 @@
         addToReviewQueue('vocab', word.id, `${word.en} (${word.he})`, 'ביקשתי רמז');
         injectDelayedRetryCard(s, card);
         card.hintLevel = Math.min(2, card.hintLevel + 1);
+        if (card.hintLevel >= 2) {
+          speakEnglish(word.en);
+        }
         const hintArea = document.getElementById('hint-area');
         hintArea.innerHTML = `
           <div class="hint-box">
             <div><strong>💡 רמז 1 (צליל):</strong> ${word.hintSound}</div>
-            ${card.hintLevel >= 2 ? `<div style="margin-top:4px;"><strong>💡 רמז 2 (הקשר):</strong> ${word.hintContext}</div>` : '<div style="margin-top:4px; font-size:0.82rem;">לחצו שוב על "רמז" לרמז נוסף.</div>'}
+            ${card.hintLevel >= 2 ? `<div style="margin-top:4px;"><strong>💡 רמז 2 (הקשר):</strong> ${word.hintContext} ${word.emoji}</div>` : '<div style="margin-top:4px; font-size:0.82rem;">לחצו שוב על "רמז" לרמז נוסף.</div>'}
           </div>
         `;
       });
@@ -750,7 +747,7 @@
                     ? cleanMsg
                     : '✅ תשובה נכונה! (מכיוון שנעזרתם בניסיון נוסף/רמז, המילה תחכה לכם להופעה חוזרת ובחיזוק זיכרון 🔄)'}
                   <div style="font-size:0.88rem; font-weight:600; margin-top:2px;">
-                    ${word.en} = ${word.he} · "${word.shortEn}" (${word.shortHe})
+                    ${word.emoji} ${word.en} = ${word.he} · "${word.shortEn}" (${word.shortHe})
                   </div>
                 </div>
                 <button type="button" class="btn btn-success" id="btn-next-card">
@@ -797,7 +794,7 @@
         topTitle: s.title,
         subTitle: `🎤 הקראה של הילד ובקרה שמקריא נכון (כל 4 שאלות — תחנת הקראה ${card.speakStationNum || 1})`,
         dotsHtml,
-        emoji: word.emoji,
+        emoji: '🎤',
         phraseEn: card.phraseToSpeak,
         phraseHe: `${word.en} (${word.he}) — "${card.phraseHe}"`,
         phonicsLegend,
@@ -839,7 +836,7 @@
         <div class="target-showcase">
           <div style="font-size:0.84rem; color:var(--text-muted); margin-bottom:2px;">הקריאו בקול ובברור את המשפט באנגלית:</div>
           <div>
-            <span class="target-emoji">${opts.emoji || '🎤'}</span>
+            <span class="target-emoji">🎤</span>
             <span class="ltr-sentence">${highlightPhonics(opts.phraseEn)}</span>
           </div>
           <div style="font-size:0.94rem; font-weight:700; margin-top:3px;">${opts.phraseHe}</div>
@@ -1550,7 +1547,7 @@
       renderSpeakingCard(container, {
         topTitle: `2. 🔤 מעבדת הפונטיקה (${idx + 1} / ${phonicsWords.length})`,
         subTitle: `🎤 הקראה של הילד ובקרה שמקריא נכון (כל 4 שאלות — צליל ${word.phonics.toUpperCase()})`,
-        emoji: word.emoji,
+        emoji: '🎤',
         phraseEn: word.shortEn,
         phraseHe: `${word.en} (${word.he}) — "${word.shortHe}"`,
         onPass: () => {
@@ -1597,7 +1594,6 @@
 
         <div class="target-showcase">
           <div>
-            <span class="target-emoji">${word.emoji}</span>
             <span class="ltr-en">${maskedWord}</span>
           </div>
           <div style="font-size:0.95rem; font-weight:700; margin-top:2px;">
@@ -1646,7 +1642,7 @@
 
           fb.innerHTML = `
             <div class="feedback-banner success">
-              <div>✅ מצוין! <strong>${highlightPhonics(word.en)}</strong> (${word.he}) — "${word.shortEn}"</div>
+              <div>✅ מצוין! ${word.emoji} <strong>${highlightPhonics(word.en)}</strong> (${word.he}) — "${word.shortEn}"</div>
               <button type="button" class="btn btn-success" id="btn-ph-next">
                 ${shouldSpeak ? '🎤 המשך להקראה ובדיקת דיבור (כל 4 שאלות)' : 'למילה הבאה ⬅️'}
               </button>
