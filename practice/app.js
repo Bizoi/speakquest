@@ -3,7 +3,7 @@
 
   const defaultState = () => ({
     mode: 'vocab',
-    wordMastery: {}, // { [wordId]: { roundA: false, roundB: false, mastered: false } }
+    wordMastery: {}, // { [wordId]: { roundA: false, roundB: false, roundC: false, mastered: false } }
     reviewQueue: [], // [{ key: 'vocab:cheese', type: 'vocab', id: 'cheese', label: 'cheese — גבינה', reason: 'טעות/רמז' }]
     completedChunks: [],
     completedDays: [],
@@ -38,7 +38,9 @@
 
   function getWordMastery(wordId) {
     if (!state.wordMastery[wordId]) {
-      state.wordMastery[wordId] = { roundA: false, roundB: false, mastered: false };
+      state.wordMastery[wordId] = { roundA: false, roundB: false, roundC: false, mastered: false };
+    } else if (typeof state.wordMastery[wordId].roundC === 'undefined') {
+      state.wordMastery[wordId].roundC = Boolean(state.wordMastery[wordId].mastered);
     }
     return state.wordMastery[wordId];
   }
@@ -133,13 +135,13 @@
     return `${sentence} (___)`;
   }
 
-  // Build a 5-word Micro-Sprint (Round A + Round B + 2 Speaking & Self-Listening cards)
+  // Build a 5-word Micro-Sprint with Triple Spaced Verification (Round A -> Round B -> Speaking Delay -> Spaced Round C)
   function startVocabSprint(wordsList, title, isReviewSprint = false) {
     const batch = wordsList.slice(0, 5);
     const drawerPool = ALL_WORDS.filter(w => w.drawerId === (batch[0]?.drawerId || 'sandwich'));
 
     const cards = [];
-    // Round A: Recognition (English -> Hebrew)
+    // Step 1 (Round A — 1/3): Recognition (English + Audio -> Hebrew)
     batch.forEach(word => {
       const distractors = pickDistractors(word, drawerPool, 2);
       cards.push({
@@ -151,12 +153,14 @@
         ]),
         flawed: false,
         hintLevel: 0,
-        answered: false
+        answered: false,
+        isRetry: false,
+        retryInjected: false
       });
     });
 
-    // Round B: Reverse Context Verification inside a 3-4 word sentence (Hebrew + Blanked English -> English word)
-    batch.forEach(word => {
+    // Step 2 (Round B — 2/3): Context Verification inside a 3-4 word sentence (Shuffled order)
+    shuffle(batch).forEach(word => {
       const distractors = pickDistractors(word, drawerPool, 2);
       cards.push({
         cardType: 'vocab-round-b',
@@ -168,11 +172,13 @@
         ]),
         flawed: false,
         hintLevel: 0,
-        answered: false
+        answered: false,
+        isRetry: false,
+        retryInjected: false
       });
     });
 
-    // Round C: 2 Mandatory Speaking & Self-Listening Cards at the end of the sprint (25% speaking)
+    // Step 3 (Spacing Delay): 2 Mandatory Speaking & Self-Listening Cards placed between Round B and Round C
     const speakWords = batch.slice(0, Math.min(2, batch.length));
     speakWords.forEach(word => {
       cards.push({
@@ -187,16 +193,56 @@
       });
     });
 
+    // Step 4 (Round C — 3/3 Spaced Retrieval): Hebrew + Emoji -> Retrieve English word from memory (Shuffled order)
+    shuffle(batch).forEach(word => {
+      const distractors = pickDistractors(word, drawerPool, 2);
+      cards.push({
+        cardType: 'vocab-round-c',
+        word,
+        choices: shuffle([
+          { label: word.en, isCorrect: true, value: word.id },
+          ...distractors.map(d => ({ label: d.en, isCorrect: false, value: d.id }))
+        ]),
+        flawed: false,
+        hintLevel: 0,
+        answered: false,
+        isRetry: false,
+        retryInjected: false
+      });
+    });
+
     activeSession = {
       sessionType: 'vocab-sprint',
       title,
       isReviewSprint,
       batch,
+      drawerPool,
       cards,
       currentIndex: 0,
       flawedWordIds: new Set()
     };
     render();
+  }
+
+  function injectDelayedRetryCard(session, sourceCard) {
+    if (!session || !sourceCard || sourceCard.retryInjected) return;
+    sourceCard.retryInjected = true;
+    const word = sourceCard.word;
+    const pool = session.drawerPool || ALL_WORDS;
+    const distractors = pickDistractors(word, pool, 2);
+    session.cards.push({
+      cardType: 'vocab-round-c',
+      word,
+      choices: shuffle([
+        { label: word.en, isCorrect: true, value: word.id },
+        ...distractors.map(d => ({ label: d.en, isCorrect: false, value: d.id }))
+      ]),
+      flawed: false,
+      hintLevel: 0,
+      answered: false,
+      isRetry: true,
+      retryInjected: true
+    });
   }
 
   function startReviewQueueSprint() {
@@ -228,15 +274,18 @@
     const m = getWordMastery(wordId);
     const isFlawedNow = flawedWordIds && flawedWordIds.has(wordId);
     if (m.mastered && !isFlawedNow) {
-      return { text: '● ● נלמד באמת! ✅', isMastered: true };
+      return { text: '● ● ● נלמד באמת! ✅ (3/3)', isMastered: true };
+    }
+    if (m.roundA && m.roundB && !isFlawedNow) {
+      return { text: '● ● ○ שלב 2 מתוך 3 (מחכה לאימות שלישי בהמשך!)', isMastered: false };
     }
     if (m.roundA && !isFlawedNow) {
-      return { text: '● ○ שלב 1 מתוך 2 (עוד אימות במשפט)', isMastered: false };
+      return { text: '● ○ ○ שלב 1 מתוך 3', isMastered: false };
     }
     if (isFlawedNow) {
-      return { text: '◐ ○ נעזרנו ברמז/ניסיון — ייכנס לחיזוק זיכרון 🔄', isMastered: false };
+      return { text: '◐ ○ ○ נעזרנו ברמז/ניסיון — ייכנס לחיזוק זיכרון 🔄', isMastered: false };
     }
-    return { text: '○ ○ מילה חדשה בספרינט', isMastered: false };
+    return { text: '○ ○ ○ מילה חדשה (0/3)', isMastered: false };
   }
 
   // Render Vocab Overview (6 Drawers + Review Queue Banner)
@@ -295,13 +344,14 @@
     container.innerHTML = `
       ${reviewBannerHtml}
       <div class="practice-card">
-        <h2 style="font-size:1.2rem; margin-bottom:6px;">איך עובד אימון הזיכרון שלנו? (נגד ניחוש מקרי!)</h2>
+        <h2 style="font-size:1.2rem; margin-bottom:6px;">איך עובד אימון הזיכרון שלנו? (אימות משולש ● ● ● 3/3 נגד ניחוש מקרי!)</h2>
         <p style="color:var(--text-muted); font-size:0.93rem;">
-          בכל ספרינט מתרגלים רק <strong>5 מילים קצרות</strong> ב-3 שלבים:
+          בכל ספרינט מתרגלים רק <strong>5 מילים קצרות</strong> עם <strong>אימות משולש ומרווח (3/3)</strong>:
           <strong>(1)</strong> זיהוי משמעות המילה ←
-          <strong>(2)</strong> שיבוץ המילה בתוך משפט קצר של 3–4 מילים ←
-          <strong>(3)</strong> הקלטה קולית ושמיעה עצמית אוטומטית של המשפט!
-          מילה מסומנת כ<strong>"נלמד באמת ✅"</strong> רק כשמצליחים בשני הסבבים בלי לנחש ובלי רמז.
+          <strong>(2)</strong> שיבוץ במשפט קצר (3–4 מילים) ←
+          <strong>(3)</strong> הקלטה ושמיעה עצמית ←
+          <strong>(4)</strong> אימות שלישי מרווח בהמשך (שליפה מעברית לאנגלית מהזיכרון)!
+          מילה מסומנת כ<strong>"נלמד באמת ✅ (3/3)"</strong> רק כשמצליחים בכל 3 ההופעות בלי לנחש ובלי רמז.
         </p>
       </div>
       <div class="drawers-grid">${drawersHtml}</div>
@@ -349,7 +399,7 @@
           <div style="font-size:0.84rem; color:var(--text-muted); direction:ltr; text-align:left;">"${highlightPhonics(w.shortEn)}"</div>
           <div style="font-size:0.8rem; color:var(--text-muted);">${w.shortHe}</div>
           <div style="font-size:0.78rem; margin-top:4px; font-weight:700; color:${m.mastered ? 'var(--success)' : 'var(--text-muted)'};">
-            ${m.mastered ? '● ● נלמד באמת ✅' : '○ ○ טרם הושלם אימות כפול'}
+            ${m.mastered ? '● ● ● נלמד באמת ✅ (3/3)' : '○ ○ ○ טרם הושלם אימות משולש (3/3)'}
           </div>
         </div>
       `;
@@ -404,11 +454,18 @@
       ? '<div class="phonics-tip">🟪 שימו לב לצליל <strong>th (לשון בין השיניים 👅)</strong> המודגש בסגול!</div>'
       : '';
 
-    if (card.cardType === 'vocab-round-a' || card.cardType === 'vocab-round-b') {
+    if (card.cardType === 'vocab-round-a' || card.cardType === 'vocab-round-b' || card.cardType === 'vocab-round-c') {
       const isRoundA = card.cardType === 'vocab-round-a';
-      const roundBadge = isRoundA
-        ? 'סבב א׳ (1/2): זיהוי משמעות המילה'
-        : 'סבב ב׳ (2/2): אימות הפוך בתוך משפט קצר (3–4 מילים)';
+      const isRoundB = card.cardType === 'vocab-round-b';
+      const isRoundC = card.cardType === 'vocab-round-c';
+
+      const roundBadge = card.isRetry
+        ? '🔁 הופעה חוזרת בסוף הספרינט (חיזוק מילה שטעינו/ביקשנו רמז!)'
+        : isRoundA
+        ? 'אימות 1/3 (סבב א׳): זיהוי משמעות המילה (אנגלית ➔ עברית)'
+        : isRoundB
+        ? 'אימות 2/3 (סבב ב׳): שיבוץ המילה בתוך משפט קצר (3–4 מילים)'
+        : 'אימות 3/3 מרווח (סבב ג׳): שליפה הפוכה מהזיכרון (עברית ➔ אנגלית)';
 
       const showcaseHtml = isRoundA
         ? `
@@ -422,7 +479,8 @@
           </div>
           <h2 class="question-prompt" style="font-size:1.2rem; text-align:center;">מה המשמעות של המילה <strong>${word.en}</strong>?</h2>
         `
-        : `
+        : isRoundB
+        ? `
           <div class="target-showcase">
             <div class="target-emoji">${word.emoji}</div>
             <div style="font-size:1.25rem; font-weight:800; margin-bottom:8px;">"${word.shortHe}"</div>
@@ -433,6 +491,18 @@
             </div>
           </div>
           <h2 class="question-prompt" style="font-size:1.2rem; text-align:center;">איזו מילה באנגלית משלימה נכון את המשפט הקצר?</h2>
+        `
+        : `
+          <div class="target-showcase">
+            <div class="target-emoji">${word.emoji}</div>
+            <div style="font-size:1.65rem; font-weight:900; margin-bottom:8px; color:var(--text-main);">${word.he}</div>
+            <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:6px;">🧠 אימות שלישי מרווח מהזיכרון (בלי לראות את המילה כתובה למעלה!)</div>
+            ${phonicsLegend}
+            <div>
+              <button type="button" class="audio-btn" id="btn-play-target-audio">🔊 רמז שמע: הקשיבו למילה באנגלית</button>
+            </div>
+          </div>
+          <h2 class="question-prompt" style="font-size:1.2rem; text-align:center;">איך אומרים באנגלית: <strong>${word.he}</strong>?</h2>
         `;
 
       const choicesHtml = card.choices.map((ch, idx) => `
@@ -477,13 +547,14 @@
       });
 
       document.getElementById('btn-play-target-audio').addEventListener('click', () => {
-        speakEnglish(isRoundA ? word.en : word.shortEn);
+        speakEnglish(isRoundB ? word.shortEn : word.en);
       });
 
       document.getElementById('btn-show-hint').addEventListener('click', () => {
         card.flawed = true;
         s.flawedWordIds.add(word.id);
         addToReviewQueue('vocab', word.id, `${word.en} (${word.he})`, 'ביקשתי רמז');
+        injectDelayedRetryCard(s, card);
         card.hintLevel = Math.min(2, card.hintLevel + 1);
         const hintArea = document.getElementById('hint-area');
         hintArea.innerHTML = `
@@ -503,26 +574,34 @@
           if (chosen.isCorrect) {
             btn.classList.add('correct');
             container.querySelectorAll('[data-choice-idx]').forEach(b => b.disabled = true);
-            speakEnglish(isRoundA ? word.en : word.shortEn);
+            speakEnglish(isRoundB ? word.shortEn : word.en);
 
             const m = getWordMastery(word.id);
             const wasClean = !card.flawed && !s.flawedWordIds.has(word.id);
 
             if (isRoundA && wasClean) {
               m.roundA = true;
-            } else if (!isRoundA && wasClean && m.roundA) {
+            } else if (isRoundB && wasClean && m.roundA) {
               m.roundB = true;
+            } else if (isRoundC && wasClean && m.roundA && m.roundB) {
+              m.roundC = true;
               m.mastered = true;
               removeFromReviewQueue('vocab', word.id);
             }
             saveState();
 
+            const cleanMsg = isRoundA
+              ? '✅ מעולה! עברתם את שלב 1 מתוך 3 למילה זו.'
+              : isRoundB
+              ? '✅ יופי! עברתם את שלב 2 מתוך 3 (במשפט קצר). בהמשך תופיע הופעה שלישית מרווחת מהזיכרון!'
+              : '🎉 אימות משולש (3/3) הושלם בהצלחה! זכרתם את המילה גם בהופעה השלישית המרווחת — סומנה כ"נלמד באמת ✅"!';
+
             feedbackArea.innerHTML = `
               <div class="feedback-banner success">
                 <div>
                   ${wasClean
-                    ? (isRoundA ? '✅ מעולה! עברתם את שלב 1 מתוך 2 למילה זו.' : '🎉 אימות כפול הושלם בהצלחה! המילה סומנה כ"נלמדה באמת"!')
-                    : '✅ תשובה נכונה! (מכיוון שנעזרתם בניסיון נוסף/רמז, המילה תחכה לכם גם בחיזוק זיכרון 🔄)'}
+                    ? cleanMsg
+                    : '✅ תשובה נכונה! (מכיוון שנעזרתם בניסיון נוסף/רמז, המילה תחכה לכם להופעה חוזרת ובחיזוק זיכרון 🔄)'}
                   <div style="font-size:0.9rem; font-weight:600; margin-top:4px;">
                     ${word.en} = ${word.he} · "${word.shortEn}" (${word.shortHe})
                   </div>
@@ -540,13 +619,17 @@
             card.flawed = true;
             s.flawedWordIds.add(word.id);
             const m = getWordMastery(word.id);
+            m.roundA = false;
+            m.roundB = false;
+            m.roundC = false;
             m.mastered = false;
             addToReviewQueue('vocab', word.id, `${word.en} (${word.he})`, 'טעות בזיהוי');
+            injectDelayedRetryCard(s, card);
 
             feedbackArea.innerHTML = `
               <div class="feedback-banner error">
                 <div>
-                  ❌ לא בדיוק. המילה <strong>${word.en}</strong> נוספה אוטומטית לתור <strong>חיזוק זיכרון 🔄</strong>.
+                  ❌ לא בדיוק. המילה <strong>${word.en}</strong> נוספה אוטומטית לתור <strong>חיזוק זיכרון 🔄</strong> ותחזור להופעה נוספת בסוף הספרינט!
                   <div>💡 רמז עזר: ${word.hintContext} — נסו לבחור את התשובה הנכונה!</div>
                 </div>
               </div>
@@ -557,11 +640,11 @@
       return;
     }
 
-    // Round C: Mandatory Speaking & Self-Listening Station
+    // Spacing Delay between Round B and Round C: Mandatory Speaking & Self-Listening Station
     if (card.cardType === 'vocab-speak') {
       renderSpeakingCard(container, {
         topTitle: s.title,
-        subTitle: 'סבב ג׳ (חובה): 🎤 תחנת דיבור ושמיעה עצמית!',
+        subTitle: 'תחנת דיבור ושמיעה עצמית (חובה — מרווח זיכרון לפני האימות השלישי!): 🎤',
         dotsHtml,
         emoji: word.emoji,
         phraseEn: card.phraseToSpeak,
@@ -777,7 +860,7 @@
           </div>
           <div style="font-size:0.84rem; color:var(--text-muted); direction:ltr;">"${w.shortEn}"</div>
           <div style="font-size:0.82rem; font-weight:700; color:${m.mastered && !flawed ? 'var(--success)' : '#b45309'};">
-            ${m.mastered && !flawed ? '✅ נלמד באמת (אימות כפול נקי!)' : '🔄 ממתין בתור חיזוק זיכרון'}
+            ${m.mastered && !flawed ? '✅ נלמד באמת (אימות משולש 3/3 נקי!)' : '🔄 ממתין בתור חיזוק זיכרון'}
           </div>
         </div>
       `;
@@ -787,7 +870,7 @@
       <div class="practice-card" style="text-align:center;">
         <h2 style="font-size:1.4rem; margin-bottom:8px;">🎉 סיימתם את ספרינט 5 המילים!</h2>
         <p style="color:var(--text-muted); margin-bottom:16px;">
-          הנה סיכום האימות הכפול והדיבור עבור המילים שתרגלתם בספרינט:
+          הנה סיכום האימות המשולש (3/3) והדיבור עבור המילים שתרגלתם בספרינט:
         </p>
         <div class="word-list-grid" style="text-align:right; margin-bottom:20px;">${itemsHtml}</div>
         <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
