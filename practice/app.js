@@ -610,39 +610,44 @@
       const showcaseHtml = isRoundA
         ? `
           <div class="target-showcase">
-            <div class="target-emoji">${word.emoji}</div>
-            <div class="ltr-en">${highlightPhonics(word.en)}</div>
+            <div>
+              <span class="target-emoji">${word.emoji}</span>
+              <span class="ltr-en">${highlightPhonics(word.en)}</span>
+            </div>
             ${phonicsLegend}
             <div>
               <button type="button" class="audio-btn" id="btn-play-target-audio">🔊 השמע הגייה באנגלית</button>
             </div>
           </div>
-          <h2 class="question-prompt" style="font-size:1.2rem; text-align:center;">מה המשמעות של המילה <strong>${word.en}</strong>?</h2>
+          <h2 class="question-prompt" style="text-align:center;">מה המשמעות של המילה <strong>${word.en}</strong>?</h2>
         `
         : isRoundB
         ? `
           <div class="target-showcase">
-            <div class="target-emoji">${word.emoji}</div>
-            <div style="font-size:1.25rem; font-weight:800; margin-bottom:8px;">"${word.shortHe}"</div>
+            <div style="font-size:1.05rem; font-weight:800; margin-bottom:2px;">
+              <span class="target-emoji">${word.emoji}</span> "${word.shortHe}"
+            </div>
             <div class="ltr-sentence">${highlightPhonics(card.blankedSentence)}</div>
             ${phonicsLegend}
             <div>
               <button type="button" class="audio-btn" id="btn-play-target-audio">🔊 השמע את המשפט המלא</button>
             </div>
           </div>
-          <h2 class="question-prompt" style="font-size:1.2rem; text-align:center;">איזו מילה באנגלית משלימה נכון את המשפט הקצר?</h2>
+          <h2 class="question-prompt" style="text-align:center;">איזו מילה באנגלית משלימה נכון את המשפט הקצר?</h2>
         `
         : `
           <div class="target-showcase">
-            <div class="target-emoji">${word.emoji}</div>
-            <div style="font-size:1.65rem; font-weight:900; margin-bottom:8px; color:var(--text-main);">${word.he}</div>
-            <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:6px;">🧠 אימות שלישי מרווח מהזיכרון (בלי לראות את המילה כתובה למעלה!)</div>
+            <div>
+              <span class="target-emoji">${word.emoji}</span>
+              <span style="font-size:1.45rem; font-weight:900; vertical-align:middle; color:var(--text-main);">${word.he}</span>
+            </div>
+            <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">🧠 אימות שלישי מרווח מהזיכרון (בלי לראות את המילה כתובה למעלה!)</div>
             ${phonicsLegend}
             <div>
               <button type="button" class="audio-btn" id="btn-play-target-audio">🔊 רמז שמע: הקשיבו למילה באנגלית</button>
             </div>
           </div>
-          <h2 class="question-prompt" style="font-size:1.2rem; text-align:center;">איך אומרים באנגלית: <strong>${word.he}</strong>?</h2>
+          <h2 class="question-prompt" style="text-align:center;">איך אומרים באנגלית: <strong>${word.he}</strong>?</h2>
         `;
 
       const choicesHtml = card.choices.map((ch, idx) => `
@@ -657,28 +662,29 @@
         <div class="practice-card">
           <div class="sprint-topbar">
             <div>
-              <div style="font-weight:800; font-size:0.95rem;">${s.title}</div>
-              <div style="font-size:0.84rem; color:var(--text-muted);">${roundBadge}</div>
+              <div style="font-weight:800; font-size:0.92rem;">${s.title}</div>
+              <div style="font-size:0.8rem; color:var(--text-muted);">${roundBadge}</div>
             </div>
             <span class="speak-cadence-badge">🎤 הקראה ובדיקת דיבור: כל 4 שאלות (עוד ${untilSpeak} שאלות להקראה)</span>
             <div class="sprint-step-pills">${dotsHtml}</div>
             <span class="mastery-badge ${masteryInfo.isMastered ? 'mastered' : ''}">${masteryInfo.text}</span>
-            <button type="button" class="btn btn-secondary" id="btn-exit-sprint" style="padding:6px 12px; font-size:0.82rem;">יציאה למגירות</button>
+            <button type="button" class="btn btn-secondary" id="btn-exit-sprint" style="padding:4px 10px; font-size:0.78rem;">יציאה למגירות</button>
           </div>
 
           ${showcaseHtml}
 
           <div class="choices-grid" id="choices-box">${choicesHtml}</div>
 
+          <div id="feedback-area"></div>
+
           <div class="support-bar">
             <button type="button" class="btn btn-warning" id="btn-show-hint">
               💡 רמז מדורג (יוסיף את המילה לחיזוק זיכרון)
             </button>
-            <span style="font-size:0.84rem; color:var(--text-muted);">כרטיס ${s.currentIndex + 1} מתוך ${s.cards.length}</span>
+            <span style="font-size:0.82rem; color:var(--text-muted);">כרטיס ${s.currentIndex + 1} מתוך ${s.cards.length}</span>
           </div>
 
           <div id="hint-area"></div>
-          <div id="feedback-area"></div>
         </div>
       `;
 
@@ -743,7 +749,7 @@
                   ${wasClean
                     ? cleanMsg
                     : '✅ תשובה נכונה! (מכיוון שנעזרתם בניסיון נוסף/רמז, המילה תחכה לכם להופעה חוזרת ובחיזוק זיכרון 🔄)'}
-                  <div style="font-size:0.9rem; font-weight:600; margin-top:4px;">
+                  <div style="font-size:0.88rem; font-weight:600; margin-top:2px;">
                     ${word.en} = ${word.he} · "${word.shortEn}" (${word.shortHe})
                   </div>
                 </div>
@@ -752,6 +758,7 @@
                 </button>
               </div>
             `;
+            feedbackArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             document.getElementById('btn-next-card').addEventListener('click', () => {
               s.currentIndex += 1;
               render();
@@ -777,6 +784,7 @@
                 </div>
               </div>
             `;
+            feedbackArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }
         });
       });
@@ -820,19 +828,21 @@
       <div class="practice-card">
         <div class="sprint-topbar">
           <div>
-            <div style="font-weight:800; font-size:0.95rem;">${opts.topTitle}</div>
-            <div style="font-size:0.84rem; color:var(--primary); font-weight:700;">${opts.subTitle}</div>
+            <div style="font-weight:800; font-size:0.92rem;">${opts.topTitle}</div>
+            <div style="font-size:0.8rem; color:var(--primary); font-weight:700;">${opts.subTitle}</div>
           </div>
           <span class="speak-cadence-badge">🎤 כל 4 שאלות — הקראה ובקרת קריאה</span>
           <div class="sprint-step-pills">${opts.dotsHtml || ''}</div>
-          <button type="button" class="btn btn-secondary" id="btn-exit-speak" style="padding:6px 12px; font-size:0.82rem;">חזרה</button>
+          <button type="button" class="btn btn-secondary" id="btn-exit-speak" style="padding:4px 10px; font-size:0.78rem;">חזרה</button>
         </div>
 
         <div class="target-showcase">
-          <div class="target-emoji">${opts.emoji || '🎤'}</div>
-          <div style="font-size:0.95rem; color:var(--text-muted); margin-bottom:4px;">הקריאו בקול ובברור את המשפט באנגלית:</div>
-          <div class="ltr-sentence">${highlightPhonics(opts.phraseEn)}</div>
-          <div style="font-size:1.05rem; font-weight:700; margin-top:6px;">${opts.phraseHe}</div>
+          <div style="font-size:0.84rem; color:var(--text-muted); margin-bottom:2px;">הקריאו בקול ובברור את המשפט באנגלית:</div>
+          <div>
+            <span class="target-emoji">${opts.emoji || '🎤'}</span>
+            <span class="ltr-sentence">${highlightPhonics(opts.phraseEn)}</span>
+          </div>
+          <div style="font-size:0.94rem; font-weight:700; margin-top:3px;">${opts.phraseHe}</div>
           ${opts.phonicsLegend || ''}
           <div>
             <button type="button" class="audio-btn" id="btn-hear-model">🔊 שמעו קודם את ההגייה הנכונה</button>
@@ -840,20 +850,19 @@
         </div>
 
         <div class="speech-box">
-          <h3 style="font-size:1.1rem; margin-bottom:8px;">🎤 הקליטו את עצמכם מקריאים — המערכת תבדוק מילה-מילה!</h3>
-          <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:14px;">
-            בסיום ההקלטה תשמעו <strong>אוטומטית את הקול שלכם</strong>, ומנגנון הבקרה יסמן בירוק/אדום כל מילה שהקראתם ויוודא שקראתם נכון לפני שממשיכים!
-          </p>
-          <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+          <div style="font-size:0.88rem; font-weight:700; color:var(--text-main); margin-bottom:6px;">
+            🎤 הקליטו את עצמכם מקריאים — תשמעו את קולכם והמערכת תבדוק מילה-מילה בירוק/אדום!
+          </div>
+          <div style="display:flex; justify-content:center; align-items:center; gap:8px; flex-wrap:wrap;">
             <button type="button" class="btn btn-primary" id="btn-start-record">
               🎤 הקליטו את עצמכם אומרים: "${opts.phraseEn}"
             </button>
             <button type="button" class="btn btn-warning" id="btn-stop-record" style="display:none;">
               ⏹️ סיימתי להקריא — בדקו אותי והשמיעו לי את עצמי!
             </button>
+            <span id="self-playback-controls" style="display:inline-flex;"></span>
           </div>
           <div class="speech-status" id="speech-status-msg"></div>
-          <div id="self-playback-controls" style="margin-top:12px;"></div>
         </div>
 
         <div id="self-eval-box" style="display:none;"></div>
@@ -861,10 +870,10 @@
         <div class="reading-demo-bar">
           <div class="reading-demo-title">🧪 בדיקת מנגנון הבקרה (ללא מיקרופון):</div>
           <div class="reading-demo-actions">
-            <button type="button" class="btn btn-secondary" id="btn-demo-read-pass" style="font-size:0.84rem; padding:7px 12px;">
+            <button type="button" class="btn btn-secondary" id="btn-demo-read-pass" style="font-size:0.8rem; padding:5px 10px;">
               ✅ הדגם הקראה תקינה של הילד
             </button>
-            <button type="button" class="btn btn-secondary" id="btn-demo-read-fail" style="font-size:0.84rem; padding:7px 12px;">
+            <button type="button" class="btn btn-secondary" id="btn-demo-read-fail" style="font-size:0.8rem; padding:5px 10px;">
               ❌ הדגם טעות בהקראה של הילד
             </button>
           </div>
@@ -901,10 +910,10 @@
 
         evalBox.innerHTML = `
           <div class="reading-verify-box verify-pass">
-            <div style="font-size:1.12rem; font-weight:800; color:#14532d; margin-bottom:6px;">
+            <div style="font-size:1.02rem; font-weight:800; color:#14532d; margin-bottom:3px;">
               ✅ בקרת הקראה אוטומטית: מצוין! (${evalRes.accuracy}% דיוק)
             </div>
-            <div style="font-size:0.95rem; font-weight:700; color:var(--text-main);">
+            <div style="font-size:0.88rem; font-weight:700; color:var(--text-main);">
               🎧 המיקרופון זיהה: <span style="direction:ltr; display:inline-block;">"${cleanTranscript}"</span>
             </div>
             <div class="reading-words-row">${pillsHtml}</div>
@@ -915,6 +924,7 @@
             </div>
           </div>
         `;
+        evalBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
         const passBtn = document.getElementById('btn-speak-good');
         if (passBtn) passBtn.addEventListener('click', opts.onPass);
@@ -931,16 +941,16 @@
 
         evalBox.innerHTML = `
           <div class="reading-verify-box verify-fail">
-            <div style="font-size:1.12rem; font-weight:800; color:#7f1d1d; margin-bottom:6px;">
+            <div style="font-size:1.02rem; font-weight:800; color:#7f1d1d; margin-bottom:3px;">
               ❌ בקרת הקראה: לא זוהתה קריאה מדויקת (${evalRes.accuracy}% דיוק)
             </div>
-            <div style="font-size:0.94rem; font-weight:700; color:var(--text-main); margin-bottom:4px;">
+            <div style="font-size:0.86rem; font-weight:700; color:var(--text-main); margin-bottom:2px;">
               🎧 המיקרופון שמע: <span style="direction:ltr; display:inline-block;">"${cleanTranscript || 'לא זוהו מילים ברורות'}"</span>
               &nbsp;מול&nbsp;
               🎯 צריך להקריא: <span style="direction:ltr; display:inline-block;">"${opts.phraseEn}"</span>
             </div>
             <div class="reading-words-row">${pillsHtml}</div>
-            <div style="font-size:0.88rem; color:#7f1d1d; font-weight:700; margin-bottom:10px;">
+            <div style="font-size:0.82rem; color:#7f1d1d; font-weight:700; margin-bottom:6px;">
               🔊 הקשיבו שוב להגייה האיטית באנגלית ונסו להקריא שוב את המילים המסומנות באדום:
             </div>
             <div class="self-check-actions">
@@ -953,6 +963,7 @@
             </div>
           </div>
         `;
+        evalBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
         const rerecordBtn = document.getElementById('btn-speak-rerecord');
         if (rerecordBtn) {
@@ -981,10 +992,10 @@
 
         evalBox.innerHTML = `
           <div class="reading-verify-box verify-manual">
-            <div style="font-size:1.05rem; font-weight:800; color:#92400e; margin-bottom:6px;">
+            <div style="font-size:0.98rem; font-weight:800; color:#92400e; margin-bottom:3px;">
               🎧 בקרת הקראה עצמית מילה-מילה (${manualAccuracy}% אומתו)
             </div>
-            <div style="font-size:0.9rem; color:var(--text-main); margin-bottom:8px;">
+            <div style="font-size:0.84rem; color:var(--text-main); margin-bottom:4px;">
               הדפדפן השמיע את ההקלטה שלכם מול הגיית הדוגמה. <strong>לחצו על כל מילה</strong> ששמעתם את עצמכם הוגים נכון וברור:
             </div>
             <div class="reading-words-row">${tapPillsHtml}</div>
@@ -1003,6 +1014,7 @@
             </div>
           </div>
         `;
+        evalBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
         evalBox.querySelectorAll('[data-manual-word]').forEach(btn => {
           btn.addEventListener('click', () => {
@@ -1256,8 +1268,8 @@
       <div class="practice-card">
         <div class="sprint-topbar">
           <div>
-            <div style="font-weight:800;">1B. 🥪 תבניות תקשורת ומשפטים קצרים (Lexical Chunks)</div>
-            <div style="font-size:0.85rem; color:var(--primary); font-weight:700; direction:ltr; text-align:right;">
+            <div style="font-weight:800; font-size:0.92rem;">1B. 🥪 תבניות תקשורת ומשפטים קצרים (Lexical Chunks)</div>
+            <div style="font-size:0.8rem; color:var(--primary); font-weight:700; direction:ltr; text-align:right;">
               Chunk: ${drill.chunkTitle}
             </div>
           </div>
@@ -1266,7 +1278,7 @@
         </div>
 
         <div class="target-showcase">
-          <div style="font-size:1.15rem; font-weight:800; margin-bottom:10px;">${drill.promptHe}</div>
+          <div style="font-size:1.05rem; font-weight:800; margin-bottom:4px;">${drill.promptHe}</div>
           <div class="ltr-sentence">${highlightPhonics(drill.sentenceEn)}</div>
           <div>
             <button type="button" class="audio-btn" id="btn-chunk-audio">🔊 השמע את המשפט המלא</button>
@@ -1275,12 +1287,13 @@
 
         <div class="choices-grid">${choicesHtml}</div>
 
+        <div id="chunk-feedback-box"></div>
+
         <div class="support-bar">
           <button type="button" class="btn btn-warning" id="btn-chunk-hint">💡 רמז לתבנית</button>
-          <span style="font-size:0.84rem; color:var(--text-muted);">כל 4 שאלות — הקראה של הילד ובקרה שמקריא נכון! 🎤</span>
+          <span style="font-size:0.82rem; color:var(--text-muted);">כל 4 שאלות — הקראה של הילד ובקרה שמקריא נכון! 🎤</span>
         </div>
         <div id="chunk-hint-box"></div>
-        <div id="chunk-feedback-box"></div>
       </div>
     `;
 
@@ -1313,6 +1326,7 @@
               </button>
             </div>
           `;
+          fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           document.getElementById('btn-chunk-next').addEventListener('click', () => {
             if (shouldSpeakNext) {
               activeSession.speakingStep = true;
@@ -1331,6 +1345,7 @@
               <div>❌ לא בדיוק. התבנית נוספה לתור <strong>חיזוק זיכרון 🔄</strong>. רמז: ${drill.hint}</div>
             </div>
           `;
+          fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
       });
     });
@@ -1403,9 +1418,9 @@
       }
       return `
         <div class="day-wagon ${cls}">
-          <div style="font-size:0.72rem; color:var(--text-muted);">${d.he}</div>
-          <div style="font-size:0.95rem; margin:2px 0;">${highlightCapitalDay(d.en)}</div>
-          <div style="font-size:0.7rem; font-weight:800;">${tag}</div>
+          <div style="font-size:0.68rem; color:var(--text-muted);">${d.he}</div>
+          <div style="font-size:0.86rem; margin:1px 0;">${highlightCapitalDay(d.en)}</div>
+          <div style="font-size:0.66rem; font-weight:800;">${tag}</div>
         </div>
       `;
     }).join('');
@@ -1421,8 +1436,8 @@
       <div class="practice-card">
         <div class="sprint-topbar">
           <div>
-            <div style="font-weight:800;">1C. 📅 רכבת ימות השבוע · Yesterday / Today / Tomorrow · Capital Letter</div>
-            <div style="font-size:0.84rem; color:var(--text-muted);">שימו לב: כל יום בשבוע מתחיל באות גדולה מודגשת בזהב (Capital Letter)!</div>
+            <div style="font-weight:800; font-size:0.92rem;">1C. 📅 רכבת ימות השבוע · Yesterday / Today / Tomorrow · Capital Letter</div>
+            <div style="font-size:0.78rem; color:var(--text-muted);">שימו לב: כל יום בשבוע מתחיל באות גדולה מודגשת בזהב (Capital Letter)!</div>
           </div>
           <span class="speak-cadence-badge">🎤 הקראה בקול: כל 4 שאלות (שאלה ${activeSession.questionsSinceSpeak}/4)</span>
           <span class="mastery-badge">חידה ${idx + 1} מתוך ${DAYS_TIMELINE_DRILLS.length}</span>
@@ -1446,7 +1461,7 @@
         </div>
 
         <div class="target-showcase">
-          <div style="font-size:1.12rem; font-weight:800; margin-bottom:8px;">${drill.questionHe}</div>
+          <div style="font-size:1.04rem; font-weight:800; margin-bottom:4px;">${drill.questionHe}</div>
           <div class="ltr-sentence">${drill.sentenceEn}</div>
           <div>
             <button type="button" class="audio-btn" id="btn-day-audio">🔊 השמע באנגלית</button>
@@ -1455,12 +1470,13 @@
 
         <div class="choices-grid">${choicesHtml}</div>
 
+        <div id="day-feedback-box"></div>
+
         <div class="support-bar">
           <button type="button" class="btn btn-warning" id="btn-day-hint">💡 רמז מסרגל הימים</button>
-          <span style="font-size:0.84rem; color:var(--text-muted);">כל 4 שאלות — הקראה של הילד ובקרה שמקריא נכון! 🎤</span>
+          <span style="font-size:0.82rem; color:var(--text-muted);">כל 4 שאלות — הקראה של הילד ובקרה שמקריא נכון! 🎤</span>
         </div>
         <div id="day-hint-box"></div>
-        <div id="day-feedback-box"></div>
       </div>
     `;
 
@@ -1489,6 +1505,7 @@
               </button>
             </div>
           `;
+          fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           document.getElementById('btn-day-next').addEventListener('click', () => {
             if (shouldSpeak) {
               activeSession.speakingStep = true;
@@ -1507,6 +1524,7 @@
               <div>❌ הסתכלו ברכבת הימים למעלה: ${drill.hint}</div>
             </div>
           `;
+          fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
       });
     });
@@ -1568,8 +1586,8 @@
       <div class="practice-card">
         <div class="sprint-topbar">
           <div>
-            <div style="font-weight:800;">2. 🔤 מעבדת הפונטיקה: צלילי <span class="ph-ch">ch</span> · <span class="ph-sh">sh</span> · <span class="ph-th">th</span></div>
-            <div style="font-size:0.84rem; color:var(--text-muted);">
+            <div style="font-weight:800; font-size:0.92rem;">2. 🔤 מעבדת הפונטיקה: צלילי <span class="ph-ch">ch</span> · <span class="ph-sh">sh</span> · <span class="ph-th">th</span></div>
+            <div style="font-size:0.78rem; color:var(--text-muted);">
               🟧 <strong>ch</strong> = צ׳ (cheese, lunch) · 🟦 <strong>sh</strong> = שׁ (fish, wash) · 🟪 <strong>th</strong> = לשון בין השיניים 👅 (teeth, Thursday)
             </div>
           </div>
@@ -1578,10 +1596,13 @@
         </div>
 
         <div class="target-showcase">
-          <div class="target-emoji">${word.emoji}</div>
-          <div style="font-size:1.15rem; font-weight:700; margin-bottom:6px;">${word.he}</div>
-          <div class="ltr-en">${maskedWord}</div>
-          <div style="font-size:0.95rem; color:var(--text-muted); margin-top:6px; direction:ltr;">"${highlightPhonics(word.shortEn)}"</div>
+          <div>
+            <span class="target-emoji">${word.emoji}</span>
+            <span class="ltr-en">${maskedWord}</span>
+          </div>
+          <div style="font-size:0.95rem; font-weight:700; margin-top:2px;">
+            ${word.he} · <span style="font-size:0.88rem; color:var(--text-muted); direction:ltr; display:inline-block;">"${highlightPhonics(word.shortEn)}"</span>
+          </div>
           <div>
             <button type="button" class="audio-btn" id="btn-phonics-audio">🔊 הקשיבו למילה ובחרו את הצליל החסר</button>
           </div>
@@ -1589,20 +1610,20 @@
 
         <div class="choices-grid">
           <button type="button" class="choice-btn" data-ph-choice="ch">
-            <span class="ph-ch" style="font-size:1.35rem;">ch</span>
-            <div style="font-size:0.82rem; margin-top:4px;">צליל צ׳</div>
+            <span class="ph-ch" style="font-size:1.15rem;">ch</span>
+            <div style="font-size:0.78rem; margin-top:2px;">צליל צ׳</div>
           </button>
           <button type="button" class="choice-btn" data-ph-choice="sh">
-            <span class="ph-sh" style="font-size:1.35rem;">sh</span>
-            <div style="font-size:0.82rem; margin-top:4px;">צליל שׁ</div>
+            <span class="ph-sh" style="font-size:1.15rem;">sh</span>
+            <div style="font-size:0.78rem; margin-top:2px;">צליל שׁ</div>
           </button>
           <button type="button" class="choice-btn" data-ph-choice="th">
-            <span class="ph-th" style="font-size:1.35rem;">th</span>
-            <div style="font-size:0.82rem; margin-top:4px;">לשון בין השיניים 👅</div>
+            <span class="ph-th" style="font-size:1.15rem;">th</span>
+            <div style="font-size:0.78rem; margin-top:2px;">לשון בין השיניים 👅</div>
           </button>
           <button type="button" class="choice-btn" data-ph-choice="st">
-            <span style="font-size:1.35rem; font-weight:900; color:var(--text-muted);">st / צליל אחר</span>
-            <div style="font-size:0.82rem; margin-top:4px;">צליל סְט / אחר</div>
+            <span style="font-size:1.15rem; font-weight:900; color:var(--text-muted);">st / צליל אחר</span>
+            <div style="font-size:0.78rem; margin-top:2px;">צליל סְט / אחר</div>
           </button>
         </div>
 
@@ -1631,6 +1652,7 @@
               </button>
             </div>
           `;
+          fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           document.getElementById('btn-ph-next').addEventListener('click', () => {
             if (shouldSpeak) {
               activeSession.speakingStep = true;
@@ -1649,6 +1671,7 @@
               <div>❌ הקשיבו שוב למילה! רמז: ${word.hintSound}</div>
             </div>
           `;
+          fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
       });
     });
