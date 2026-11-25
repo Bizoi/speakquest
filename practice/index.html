@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Sandwich Party — אימון ממוקד לכיתה ד׳</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-header">
+      <div class="brand-area">
+        <h1>🥪 The Sandwich Party — אימון זיכרון פעיל</h1>
+        <p class="brand-subtitle">יחידת לימוד לכיתה ד׳ · ספרינטים קצרים של 5 מילים · אימות כפול + הקלטה ושמיעה עצמית</p>
+      </div>
+      <div class="header-stats">
+        <span class="stat-pill" id="stat-mastered">✅ נלמדו באמת: 0 / 76</span>
+        <button type="button" class="stat-pill review-btn" id="btn-review-queue" title="תרגול מילים שטעיתי בהן או ביקשתי רמז">
+          🔄 חיזוק זיכרון (<span id="review-count">0</span>)
+        </button>
+        <button type="button" class="reset-link" id="btn-reset-progress">איפוס התקדמות</button>
+      </div>
+    </header>
+
+    <nav class="mode-tabs" aria-label="תחנות תרגול לפי סדר עדיפויות">
+      <button type="button" class="mode-tab active" data-mode="vocab" id="tab-vocab">
+        <span class="mode-tab-title">1A. 🧠 אוצר מילים + משפטים</span>
+        <span class="mode-tab-sub">76 מילים ב-6 מגירות · אימות כפול + דיבור</span>
+      </button>
+      <button type="button" class="mode-tab" data-mode="chunks" id="tab-chunks">
+        <span class="mode-tab-title">1B. 🥪 תבניות ושיחה (Chunks)</span>
+        <span class="mode-tab-sub">11 תבניות תקשורת ומשפטים קצרים</span>
+      </button>
+      <button type="button" class="mode-tab" data-mode="days" id="tab-days">
+        <span class="mode-tab-title">1C. 📅 ימים וזמן (Days &amp; Time)</span>
+        <span class="mode-tab-sub">Yesterday · Today · Tomorrow · Capital Letter</span>
+      </button>
+      <button type="button" class="mode-tab" data-mode="phonics" id="tab-phonics">
+        <span class="mode-tab-title">2. 🔤 מעבדת צלילים (ch/sh/th)</span>
+        <span class="mode-tab-sub">זיהוי צליל חסר + הקלטה עצמית</span>
+      </button>
+    </nav>
+
+    <main id="app-main" aria-live="polite"></main>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
